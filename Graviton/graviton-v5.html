@@ -1,0 +1,1474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>GRAVITON — Solar Conquest</title>
+<style>
+:root{--void:#03030c;--panel:rgba(6,8,32,.88);--border:rgba(80,160,255,.18);
+--blue:#3a9eff;--purple:#8b5cf6;--gold:#f59e0b;--green:#10b981;--red:#ef4444;
+--cyan:#22d3ee;--text:#e2e8f0;--dim:rgba(160,200,255,.5);}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--void);color:var(--text);font-family:-apple-system,'SF Pro Display','Segoe UI',sans-serif;overflow:hidden;width:100vw;height:100vh;touch-action:none;user-select:none;}
+canvas{position:absolute;top:0;left:0;width:100%;height:100%;}
+#hud{position:absolute;inset:0;pointer-events:none;z-index:10;}
+.topbar{position:absolute;top:0;left:0;right:0;padding:10px 14px;
+  background:linear-gradient(to bottom,rgba(3,3,12,.97),transparent);
+  display:flex;align-items:center;justify-content:space-between;pointer-events:auto;}
+.logo{font-size:17px;font-weight:900;letter-spacing:.2em;
+  background:linear-gradient(135deg,var(--blue),var(--purple));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.logo-sub{font-size:7px;letter-spacing:.35em;color:var(--dim);-webkit-text-fill-color:initial;display:block;margin-top:-1px;}
+.sim-date{font-size:8px;letter-spacing:.12em;color:var(--gold);margin-top:2px;}
+.id-chip{display:flex;align-items:center;gap:7px;background:var(--panel);
+  border:1px solid var(--border);border-radius:40px;padding:4px 10px 4px 5px;backdrop-filter:blur(12px);}
+.planet-dot{width:24px;height:24px;border-radius:50%;
+  background:radial-gradient(circle at 35% 35%,#60a5fa,#1d4ed8 60%,#0f2a6e);
+  box-shadow:0 0 10px rgba(59,130,246,.7);position:relative;overflow:hidden;flex-shrink:0;}
+.planet-dot::after{content:'';position:absolute;top:22%;left:28%;width:50%;height:22%;
+  background:rgba(16,185,129,.7);border-radius:50%;transform:rotate(-15deg);}
+.id-name{font-size:11px;font-weight:700;}
+.id-class{font-size:8px;letter-spacing:.12em;color:var(--blue);}
+.stats{display:flex;gap:5px;}
+.stat{display:flex;flex-direction:column;align-items:center;background:var(--panel);
+  border:1px solid var(--border);border-radius:10px;padding:4px 8px;backdrop-filter:blur(12px);min-width:52px;}
+.stat-l{font-size:7px;letter-spacing:.18em;color:var(--dim);font-weight:700;}
+.stat-v{font-size:14px;font-weight:800;line-height:1;margin-top:1px;}
+.speed-strip{position:absolute;top:56px;left:0;right:0;padding:4px 14px;
+  display:flex;align-items:center;gap:4px;justify-content:center;
+  background:linear-gradient(to bottom,rgba(3,3,12,.55),transparent);pointer-events:auto;}
+.spd-btn{background:rgba(6,8,32,.7);border:1px solid var(--border);
+  border-radius:20px;padding:3px 9px;font-size:8px;font-weight:700;
+  letter-spacing:.08em;color:var(--dim);cursor:pointer;backdrop-filter:blur(10px);transition:all .15s;white-space:nowrap;}
+.spd-btn.active{background:rgba(58,158,255,.15);border-color:var(--blue);color:var(--blue);}
+.spd-btn:hover{color:var(--text);border-color:rgba(80,160,255,.4);}
+.spd-label{font-size:7px;letter-spacing:.15em;color:var(--dim);margin-right:4px;}
+#homeBtn{position:absolute;top:86px;right:10px;background:var(--panel);
+  border:1px solid var(--border);border-radius:20px;padding:5px 10px;
+  font-size:8px;font-weight:700;letter-spacing:.1em;color:var(--blue);
+  cursor:pointer;backdrop-filter:blur(12px);pointer-events:auto;display:none;transition:all .2s;}
+#homeBtn:hover{background:rgba(58,158,255,.15);}
+#homeBtn.visible{display:block;}
+#shopBtn{position:absolute;top:86px;left:10px;background:var(--panel);
+  border:1px solid rgba(245,158,11,.35);border-radius:20px;padding:5px 12px;
+  font-size:9px;font-weight:800;letter-spacing:.1em;color:var(--gold);
+  cursor:pointer;backdrop-filter:blur(12px);pointer-events:auto;transition:all .2s;}
+#shopBtn:hover{background:rgba(245,158,11,.12);}
+.side{position:absolute;right:10px;top:116px;width:162px;background:var(--panel);
+  border:1px solid var(--border);border-radius:14px;padding:9px;backdrop-filter:blur(16px);pointer-events:auto;}
+.panel-title{font-size:7px;letter-spacing:.25em;color:var(--dim);font-weight:700;margin-bottom:7px;}
+.obj-row{display:flex;align-items:center;gap:6px;margin-bottom:6px;}
+.obj-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;box-shadow:0 0 4px currentColor;}
+.obj-info{flex:1;}
+.obj-name{font-size:9px;font-weight:700;}
+.obj-det{font-size:7px;color:var(--dim);}
+.obj-badge{font-size:7px;font-weight:700;padding:1px 5px;border-radius:3px;flex-shrink:0;}
+.badge-smash{background:rgba(16,185,129,.15);color:var(--green);}
+.badge-hard{background:rgba(245,158,11,.15);color:var(--gold);}
+.badge-danger{background:rgba(239,68,68,.15);color:var(--red);}
+.badge-far{background:rgba(139,92,246,.12);color:var(--purple);}
+.meters{position:absolute;bottom:0;left:0;right:0;padding:7px 14px 12px;
+  background:linear-gradient(to top,rgba(3,3,12,.97),transparent);pointer-events:auto;}
+.meter-row{display:flex;align-items:center;gap:8px;margin-bottom:5px;}
+.m-lbl{font-size:8px;letter-spacing:.18em;color:var(--dim);font-weight:700;width:44px;flex-shrink:0;}
+.m-track{flex:1;height:4px;background:rgba(255,255,255,.07);border-radius:2px;overflow:hidden;}
+.m-fill{height:100%;border-radius:2px;transition:width .5s cubic-bezier(.4,0,.2,1);position:relative;}
+.m-fill::after{content:'';position:absolute;right:0;top:0;width:6px;height:100%;background:rgba(255,255,255,.5);filter:blur(1px);border-radius:2px;}
+.fill-hp{background:linear-gradient(90deg,#065f46,#10b981);}
+.fill-xp{background:linear-gradient(90deg,#78350f,#f59e0b);}
+.fill-ms{background:linear-gradient(90deg,#4c1d95,#8b5cf6);}
+.m-val{font-size:9px;font-weight:700;width:38px;text-align:right;flex-shrink:0;}
+.hints{display:flex;gap:8px;margin-top:3px;flex-wrap:wrap;}
+.hint{font-size:8px;letter-spacing:.1em;color:var(--dim);display:flex;align-items:center;gap:4px;}
+.key{background:rgba(80,160,255,.1);border:1px solid rgba(80,160,255,.3);
+  border-radius:3px;padding:1px 5px;font-size:8px;color:var(--blue);font-weight:700;}
+#toasts{position:absolute;top:112px;left:50%;transform:translateX(-50%);
+  display:flex;flex-direction:column;align-items:center;gap:5px;pointer-events:none;z-index:20;}
+.toast{background:var(--panel);border:1px solid var(--border);border-radius:20px;
+  padding:6px 14px;font-size:11px;font-weight:700;backdrop-filter:blur(16px);white-space:nowrap;
+  animation:toastIn .3s ease,toastOut .4s ease 2.2s forwards;}
+@keyframes toastIn{from{opacity:0;transform:translateY(-8px) scale(.95)}to{opacity:1;transform:none}}
+@keyframes toastOut{from{opacity:1}to{opacity:0;transform:translateY(-6px)}}
+#lvlup{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  text-align:center;pointer-events:none;z-index:30;opacity:0;}
+#lvlup.show{animation:lvlAnim 2.5s ease forwards;}
+@keyframes lvlAnim{0%{opacity:0;transform:translate(-50%,-50%) scale(.8)}15%{opacity:1;transform:translate(-50%,-50%) scale(1.05)}70%{opacity:1;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-50%) scale(.95)}}
+.lvl-title{font-size:34px;font-weight:900;letter-spacing:.08em;
+  background:linear-gradient(135deg,var(--gold),#fde68a,var(--gold));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.lvl-sub{font-size:11px;letter-spacing:.2em;color:var(--dim);font-weight:600;}
+#infoBox{position:absolute;left:50%;bottom:130px;transform:translateX(-50%);
+  background:var(--panel);border:1px solid var(--border);border-radius:14px;
+  padding:12px 16px;pointer-events:auto;backdrop-filter:blur(20px);
+  min-width:220px;max-width:280px;text-align:center;z-index:15;display:none;}
+.info-name{font-size:18px;font-weight:800;margin-bottom:3px;}
+.info-type{font-size:8px;letter-spacing:.2em;color:var(--dim);margin-bottom:10px;}
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px;}
+.info-cell{background:rgba(255,255,255,.04);border-radius:8px;padding:6px 8px;}
+.info-cell-l{font-size:7px;letter-spacing:.15em;color:var(--dim);}
+.info-cell-v{font-size:13px;font-weight:700;}
+.action-btn{width:100%;padding:8px;border-radius:8px;border:none;font-size:11px;
+  font-weight:800;letter-spacing:.1em;cursor:pointer;transition:transform .15s,box-shadow .15s;margin-top:3px;}
+.action-btn:hover{transform:scale(1.03);}
+.btn-smash{background:linear-gradient(135deg,#065f46,#10b981);color:#fff;box-shadow:0 0 20px rgba(16,185,129,.3);}
+.btn-hard{background:linear-gradient(135deg,#78350f,#f59e0b);color:#fff;box-shadow:0 0 20px rgba(245,158,11,.3);}
+.btn-danger{background:rgba(239,68,68,.12);color:var(--red);border:1px solid rgba(239,68,68,.3);}
+.btn-close{background:rgba(255,255,255,.06);color:var(--dim);border:1px solid rgba(255,255,255,.1);}
+.btn-star{background:linear-gradient(135deg,#1e1b4b,#4338ca);color:#a5b4fc;border:1px solid rgba(99,102,241,.4);}
+#galacticLabel{position:absolute;top:112px;left:50%;transform:translateX(-50%);
+  font-size:9px;letter-spacing:.3em;color:rgba(99,102,241,.7);font-weight:700;pointer-events:none;display:none;}
+/* SHOP MODAL */
+#shopModal{position:absolute;inset:0;background:rgba(3,3,12,.93);display:none;
+  align-items:center;justify-content:center;z-index:60;backdrop-filter:blur(10px);}
+#shopModal.open{display:flex;}
+.shop-inner{background:var(--panel);border:1px solid rgba(245,158,11,.3);border-radius:20px;
+  padding:18px;max-width:340px;width:92%;max-height:82vh;overflow-y:auto;}
+.shop-title{font-size:15px;font-weight:900;letter-spacing:.2em;color:var(--gold);text-align:center;margin-bottom:4px;}
+.shop-coins{font-size:11px;color:var(--gold);text-align:center;margin-bottom:14px;opacity:.8;}
+.upg-item{background:rgba(255,255,255,.04);border:1px solid var(--border);
+  border-radius:12px;padding:10px 12px;margin-bottom:8px;display:flex;align-items:center;gap:10px;}
+.upg-icon{font-size:22px;flex-shrink:0;}
+.upg-info{flex:1;}
+.upg-name{font-size:11px;font-weight:700;margin-bottom:2px;}
+.upg-desc{font-size:8px;color:var(--dim);line-height:1.4;}
+.upg-owned{font-size:8px;color:var(--green);margin-top:2px;}
+.upg-btn{background:linear-gradient(135deg,#78350f,#d97706);border:none;
+  border-radius:8px;padding:6px 10px;font-size:9px;font-weight:800;color:#fff;
+  cursor:pointer;white-space:nowrap;min-width:60px;text-align:center;}
+.upg-btn:disabled{background:rgba(255,255,255,.08);color:rgba(255,255,255,.3);cursor:default;}
+.upg-btn.maxed{background:linear-gradient(135deg,#065f46,#10b981);}
+.shop-close{width:100%;padding:9px;background:rgba(255,255,255,.06);border:1px solid var(--border);
+  border-radius:10px;color:var(--dim);font-size:11px;font-weight:700;cursor:pointer;margin-top:4px;}
+/* SPLASH */
+#splash{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 40%,#07071e 0%,#03030c 100%);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:100;transition:opacity .8s;}
+#splash.fade{opacity:0;pointer-events:none;}
+.s-logo{font-size:46px;font-weight:900;letter-spacing:.15em;
+  background:linear-gradient(135deg,#60a5fa,#a78bfa,#60a5fa);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  animation:glowPulse 3s ease-in-out infinite;margin-bottom:3px;}
+@keyframes glowPulse{0%,100%{filter:drop-shadow(0 0 18px rgba(96,165,250,.4))}50%{filter:drop-shadow(0 0 38px rgba(167,139,250,.7))}}
+.s-tag{font-size:9px;letter-spacing:.4em;color:var(--dim);margin-bottom:28px;}
+.s-facts{max-width:310px;text-align:center;margin-bottom:10px;font-size:12px;line-height:1.8;color:rgba(160,200,255,.7);}
+.s-facts strong{color:#60a5fa;}
+.s-date{font-size:9px;letter-spacing:.12em;color:var(--gold);margin-bottom:28px;opacity:.8;}
+.s-btn{background:linear-gradient(135deg,#1d4ed8,#7c3aed);border:none;border-radius:50px;
+  padding:13px 42px;font-size:13px;font-weight:800;letter-spacing:.15em;color:#fff;cursor:pointer;
+  box-shadow:0 0 28px rgba(59,130,246,.4);margin-bottom:14px;pointer-events:auto;transition:transform .2s,box-shadow .2s;}
+.s-btn:hover{transform:scale(1.04);box-shadow:0 0 48px rgba(124,58,237,.6);}
+.s-tip{font-size:9px;letter-spacing:.1em;color:var(--dim);}
+#splashOrbit{width:200px;height:200px;position:relative;margin-bottom:28px;}
+.s-sun{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  width:30px;height:30px;background:radial-gradient(circle,#fffbeb,#f59e0b,#b45309);
+  border-radius:50%;box-shadow:0 0 28px #f59e0b,0 0 56px rgba(245,158,11,.4);animation:sunPulse 2s ease-in-out infinite;}
+@keyframes sunPulse{0%,100%{box-shadow:0 0 28px #f59e0b,0 0 56px rgba(245,158,11,.4)}50%{box-shadow:0 0 46px #f59e0b,0 0 90px rgba(245,158,11,.5)}}
+.s-ring{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);border-radius:50%;border:1px solid rgba(80,160,255,.1);}
+.s-planet{position:absolute;border-radius:50%;top:50%;left:50%;}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+
+<div id="splash">
+  <div id="splashOrbit"></div>
+  <div class="s-logo">GRAVITON</div>
+  <div class="s-tag">SOLAR CONQUEST · V5 · SMASH &amp; UPGRADE</div>
+  <div class="s-facts">You are <strong>Earth</strong>. Drag worlds into you. <strong>Hard-smash bigger planets</strong> to strip their XP level by level. Earn <strong>⚡ coins</strong>, buy upgrades, explore exoplanet systems.</div>
+  <div class="s-date">⊙ SOLAR DATE: 16 JULY 2026 · JPL EPHEMERIS · 100+ BODIES · EXOPLANET SYSTEMS</div>
+  <button class="s-btn" id="startBtn">BEGIN CONQUEST</button>
+  <div class="s-tip">DRAG EARTH · HARD SMASH BIGGER WORLDS · EARN COINS · BUY UPGRADES</div>
+</div>
+
+<div id="hud">
+  <div class="topbar">
+    <div>
+      <div class="logo">GRAVITON</div>
+      <span class="logo-sub">SOLAR CONQUEST</span>
+      <div class="sim-date" id="simDate">⊙ 16 JUL 2026</div>
+    </div>
+    <div class="id-chip">
+      <div class="planet-dot"></div>
+      <div>
+        <div class="id-name" id="pName">Earth</div>
+        <div class="id-class">LVL <span id="pLevel">1</span> · <span id="pClass">TERRESTRIAL</span></div>
+      </div>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="stat-l">XP</div><div class="stat-v" id="xpVal" style="color:var(--gold)">0</div></div>
+      <div class="stat"><div class="stat-l">COINS</div><div class="stat-v" id="coinVal" style="color:#f59e0b">0</div></div>
+      <div class="stat"><div class="stat-l">SMASHED</div><div class="stat-v" id="smashVal">0</div></div>
+    </div>
+  </div>
+
+  <div class="speed-strip">
+    <span class="spd-label">SPEED:</span>
+    <button class="spd-btn" data-spd="0">⏸ FROZEN</button>
+    <button class="spd-btn" data-spd="1">▶ 1D/s</button>
+    <button class="spd-btn active" data-spd="30">⚡ 30D/s</button>
+    <button class="spd-btn" data-spd="365">🌪 1Y/s</button>
+    <button class="spd-btn" data-spd="3650">💫 10Y/s</button>
+  </div>
+
+  <button id="homeBtn">🌍 COME BACK TO EARTH</button>
+  <button id="shopBtn">⚡ SHOP</button>
+
+  <div class="side">
+    <div class="panel-title">◈ REACHABLE WORLDS</div>
+    <div id="sideList"></div>
+  </div>
+
+  <div id="galacticLabel">◈ GALACTIC VIEW — NEARBY STAR SYSTEMS</div>
+
+  <div class="meters">
+    <div class="meter-row">
+      <div class="m-lbl">HEALTH</div>
+      <div class="m-track"><div class="m-fill fill-hp" id="hpBar" style="width:100%"></div></div>
+      <div class="m-val" id="hpVal" style="color:var(--green)">100%</div>
+    </div>
+    <div class="meter-row">
+      <div class="m-lbl">XP</div>
+      <div class="m-track"><div class="m-fill fill-xp" id="xpBar" style="width:0%"></div></div>
+      <div class="m-val" id="xpPct" style="color:var(--gold)">0%</div>
+    </div>
+    <div class="meter-row">
+      <div class="m-lbl">MASS</div>
+      <div class="m-track"><div class="m-fill fill-ms" id="msBar" style="width:5%"></div></div>
+      <div class="m-val" id="msVal" style="color:var(--purple)">1.00</div>
+    </div>
+    <div class="hints">
+      <span class="hint"><span class="key">TAP LINE</span> Travel</span>
+      <span class="hint"><span class="key">DRAG EARTH</span> Smash</span>
+      <span class="hint"><span class="key">PAN</span> Explore</span>
+      <span class="hint"><span class="key">⚡ SHOP</span> Upgrades</span>
+    </div>
+  </div>
+</div>
+
+<div id="infoBox">
+  <div class="info-name" id="infoName">—</div>
+  <div class="info-type" id="infoType">—</div>
+  <div class="info-grid">
+    <div class="info-cell"><div class="info-cell-l">MASS</div><div class="info-cell-v" id="infoMass">—</div></div>
+    <div class="info-cell"><div class="info-cell-l">DISTANCE</div><div class="info-cell-v" id="infoDist">—</div></div>
+    <div class="info-cell"><div class="info-cell-l">BODY LEVEL</div><div class="info-cell-v" id="infoBodyLvl">—</div></div>
+    <div class="info-cell"><div class="info-cell-l">XP REWARD</div><div class="info-cell-v" id="infoXP">—</div></div>
+  </div>
+  <button class="action-btn" id="actionBtn">—</button>
+  <button class="action-btn btn-close" id="closeBtn">DISMISS</button>
+</div>
+
+<div id="shopModal">
+  <div class="shop-inner">
+    <div class="shop-title">⚡ UPGRADE SHOP</div>
+    <div class="shop-coins" id="shopCoinsDisplay">0 coins available</div>
+    <div id="shopItems"></div>
+    <button class="shop-close" id="shopClose">✕ CLOSE SHOP</button>
+  </div>
+</div>
+
+<div id="toasts"></div>
+<div id="lvlup"><div class="lvl-title">LEVEL UP</div><div class="lvl-sub" id="lvlSub">TERRESTRIAL → MEGA-WORLD</div></div>
+<script>
+// ══════════════════════════════════════════════════════════════
+// GRAVITON v5 — Hard Smash · Body Levels · Coins · Upgrades · Exoplanets
+// ══════════════════════════════════════════════════════════════
+
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+
+const J2000 = 9692.5;
+const J2000_CY = J2000 / 36525;
+let speedMult = 30;
+let simDayOffset = 0;
+
+// ── JPL Keplerian elements ──
+const ORBITAL = {
+  Mercury:{ a:0.38709927, e:0.20563593, L0:252.25032350, n:149472.67411175, peri:77.46 },
+  Venus:  { a:0.72333566, e:0.00677672, L0:181.97909950, n:58517.81538729,  peri:131.60 },
+  Earth:  { a:1.00000261, e:0.01671123, L0:100.46457166, n:35999.37244981,  peri:102.94 },
+  Mars:   { a:1.52371034, e:0.09339410, L0:-4.55343205,  n:19140.30268499,  peri:336.06 },
+  Jupiter:{ a:5.20288700, e:0.04838624, L0:34.39644051,  n:3034.74612775,   peri:14.33 },
+  Saturn: { a:9.53667594, e:0.05386179, L0:49.95424423,  n:1222.49362201,   peri:92.60 },
+  Uranus: { a:19.18916464,e:0.04725744, L0:313.23810451, n:428.48202785,    peri:170.95 },
+  Neptune:{ a:30.06992276,e:0.00859048, L0:-55.12002969, n:218.45945325,    peri:44.96 },
+};
+
+function solveOrb(a,e,L0,n,peri){
+  let L=(L0+n*J2000_CY)%360; if(L<0)L+=360;
+  const M=(L-peri)*Math.PI/180; let E=M;
+  for(let i=0;i<8;i++) E=M+e*Math.sin(E);
+  const nu=2*Math.atan2(Math.sqrt(1+e)*Math.sin(E/2),Math.sqrt(1-e)*Math.cos(E/2));
+  const r=a*(1-e*Math.cos(E)); const lon=nu+peri*Math.PI/180;
+  return {x:r*Math.cos(lon),y:r*Math.sin(lon),r_au:r};
+}
+function computePos(name){return solveOrb(ORBITAL[name].a,ORBITAL[name].e,ORBITAL[name].L0,ORBITAL[name].n,ORBITAL[name].peri);}
+const PP={};
+Object.keys(ORBITAL).forEach(k=>{PP[k]=computePos(k);});
+function cpos(a,deg){const rad=deg*Math.PI/180;return{x:a*Math.cos(rad),y:a*Math.sin(rad),r_au:a};}
+
+// Body level based on mass
+function calcBodyLevel(mass){
+  if(mass>=100000) return 20;
+  if(mass>=1000)   return 15;
+  if(mass>=100)    return 12;
+  if(mass>=10)     return 8;
+  if(mass>=1)      return 5;
+  if(mass>=0.1)    return 4;
+  if(mass>=0.01)   return 3;
+  if(mass>=0.001)  return 2;
+  return 1;
+}
+
+// ── NEARBY STAR SYSTEMS ──
+const STAR_SYSTEMS = [
+  {name:'Proxima Centauri',ly:4.25,angle:212,color:'#ff6b6b',glow:'#ff9999',gameR:7,starType:'RED DWARF',planets:2,fact:'Nearest star. Proxima b sits in the habitable zone.'},
+  {name:'Alpha Centauri',ly:4.34,angle:213,color:'#fffbeb',glow:'#fef9c3',gameR:13,starType:'BINARY STAR',planets:1,fact:'Closest sun-like system. Binary pair Alpha Cen A+B.'},
+  {name:"Barnard's Star",ly:5.96,angle:271,color:'#f97316',glow:'#fdba74',gameR:7,starType:'RED DWARF',planets:4,fact:'4 confirmed planets — fastest moving star in our sky.'},
+  {name:'Luhman 16',ly:6.5,angle:163,color:'#8b5cf6',glow:'#c4b5fd',gameR:9,starType:'BROWN DWARF PAIR',planets:0,fact:'Binary failed stars — brown dwarfs that never ignited.'},
+  {name:'Wolf 359',ly:7.86,angle:162,color:'#ef4444',glow:'#fca5a5',gameR:6,starType:'RED DWARF',planets:0,fact:'One of the smallest known stars. Famous from Star Trek.'},
+  {name:'Sirius',ly:8.71,angle:104,color:'#dbeafe',glow:'#eff6ff',gameR:16,starType:'BINARY A+WD',planets:0,fact:'Brightest star in our sky. 25× more luminous than Sol.'},
+  {name:'Epsilon Eridani',ly:10.47,angle:53,color:'#fbbf24',glow:'#fde68a',gameR:10,starType:'ORANGE DWARF',planets:1,fact:'Young sun-like star with confirmed planet + asteroid belt.'},
+  {name:'Tau Ceti',ly:11.9,angle:130,color:'#fcd34d',glow:'#fef3c7',gameR:11,starType:'G-TYPE STAR',planets:4,fact:'4+ planets, one possibly in the habitable zone.'},
+  {name:"Kapteyn's Star",ly:12.8,angle:195,color:'#f87171',glow:'#fecaca',gameR:7,starType:'RED DWARF',planets:2,fact:'Ancient — 11.5 billion years old (2.5× Sol age).'},
+  {name:'TRAPPIST-1',ly:39,angle:347,color:'#ff4444',glow:'#ff8888',gameR:6,starType:'ULTRA-COOL DWARF',planets:7,fact:'7 Earth-sized planets! 3 in habitable zone. Webb target.'},
+];
+STAR_SYSTEMS.forEach(s=>{
+  const r=s.ly*20; const a=s.angle*Math.PI/180;
+  s.pos={x:r*Math.cos(a),y:r*Math.sin(a)};
+  s.isStarSystem=true; s.alive=true; s.mass=999999; s.isDanger=true;
+  s.id=s.name.replace(/\s/g,'_').toLowerCase();
+});
+
+// ── EXOPLANET BODIES (orbit around their star system) ──
+const EXOPLANET_BODIES = [
+  // TRAPPIST-1 (7 planets)
+  {id:'t1b',name:'TRAPPIST-1b',type:'ROCKY',mass:0.85,gameR:11,color:'#f97316',glow:'#fdba74',xp:200,starRef:'TRAPPIST-1',orbitR:3.5,speed:0.28,angle:0.5,alive:true,isExoplanet:true},
+  {id:'t1c',name:'TRAPPIST-1c',type:'ROCKY',mass:0.72,gameR:10,color:'#ef4444',glow:'#fca5a5',xp:180,starRef:'TRAPPIST-1',orbitR:5.0,speed:0.20,angle:1.2,alive:true,isExoplanet:true},
+  {id:'t1d',name:'TRAPPIST-1d',type:'ROCKY',mass:0.39,gameR:9,color:'#22c55e',glow:'#86efac',xp:150,starRef:'TRAPPIST-1',orbitR:7.0,speed:0.14,angle:2.1,alive:true,isExoplanet:true},
+  {id:'t1e',name:'TRAPPIST-1e',type:'ROCKY',mass:0.69,gameR:10,color:'#3b82f6',glow:'#93c5fd',xp:180,starRef:'TRAPPIST-1',orbitR:9.5,speed:0.095,angle:0.8,alive:true,isExoplanet:true,fact:'In the habitable zone — strong James Webb telescope target!'},
+  {id:'t1f',name:'TRAPPIST-1f',type:'ROCKY',mass:0.68,gameR:10,color:'#60a5fa',glow:'#bfdbfe',xp:175,starRef:'TRAPPIST-1',orbitR:12.5,speed:0.062,angle:3.4,alive:true,isExoplanet:true,fact:'Outer habitable zone — may harbor liquid water.'},
+  {id:'t1g',name:'TRAPPIST-1g',type:'ROCKY',mass:1.34,gameR:13,color:'#a855f7',glow:'#d8b4fe',xp:220,starRef:'TRAPPIST-1',orbitR:16.0,speed:0.046,angle:5.1,alive:true,isExoplanet:true},
+  {id:'t1h',name:'TRAPPIST-1h',type:'ROCKY',mass:0.33,gameR:8,color:'#e2e8f0',glow:'#f8fafc',xp:140,starRef:'TRAPPIST-1',orbitR:21.0,speed:0.030,angle:1.7,alive:true,isExoplanet:true},
+  // Proxima Centauri
+  {id:'proxb',name:'Proxima b',type:'ROCKY',mass:1.27,gameR:13,color:'#22c55e',glow:'#86efac',xp:250,starRef:'Proxima Centauri',orbitR:4.0,speed:0.18,angle:1.0,alive:true,isExoplanet:true,fact:'In the habitable zone, 4.25 light-years away from Earth!'},
+  {id:'proxd',name:'Proxima d',type:'ROCKY',mass:0.26,gameR:8,color:'#a3e635',glow:'#d9f99d',xp:120,starRef:'Proxima Centauri',orbitR:2.2,speed:0.36,angle:2.3,alive:true,isExoplanet:true},
+  // Alpha Centauri
+  {id:'alphabb',name:'Alpha Cen Bb',type:'ROCKY',mass:1.1,gameR:13,color:'#fbbf24',glow:'#fde68a',xp:200,starRef:'Alpha Centauri',orbitR:3.5,speed:0.22,angle:0.3,alive:true,isExoplanet:true,fact:'Hypothetical super-Earth in the Alpha Centauri binary system.'},
+  // Barnard's Star
+  {id:'barnb',name:"Barnard b",type:'ROCKY',mass:0.40,gameR:9,color:'#fb923c',glow:'#fdba74',xp:130,starRef:"Barnard's Star",orbitR:5.0,speed:0.10,angle:0.6,alive:true,isExoplanet:true,fact:"One of Barnard's Star's 4 confirmed planets."},
+  // Epsilon Eridani
+  {id:'epseb',name:'Eps Eri b',type:'GAS GIANT',mass:200,gameR:28,color:'#d97706',glow:'#fde68a',xp:400,starRef:'Epsilon Eridani',orbitR:9.0,speed:0.038,angle:1.5,alive:true,isExoplanet:true,isDanger:true,fact:'Confirmed Jupiter-class world at Epsilon Eridani.'},
+  // Tau Ceti
+  {id:'tauce',name:'Tau Ceti e',type:'SUPER-EARTH',mass:3.9,gameR:16,color:'#84cc16',glow:'#bef264',xp:300,starRef:'Tau Ceti',orbitR:6.0,speed:0.078,angle:2.8,alive:true,isExoplanet:true,fact:'Super-Earth at the edge of the Tau Ceti habitable zone.'},
+  // Kapteyn's
+  {id:'kapb',name:"Kapteyn b",type:'SUPER-EARTH',mass:4.8,gameR:17,color:'#f87171',glow:'#fecaca',xp:280,starRef:"Kapteyn's Star",orbitR:5.0,speed:0.09,angle:4.2,alive:true,isExoplanet:true,fact:"Ancient habitable-zone planet around a 11.5-billion-year-old star!"},
+];
+
+// Assign initial positions to exoplanets
+EXOPLANET_BODIES.forEach(ep => {
+  const star = STAR_SYSTEMS.find(s=>s.name===ep.starRef);
+  if (star) {
+    ep.pos = {x: star.pos.x + ep.orbitR*Math.cos(ep.angle), y: star.pos.y + ep.orbitR*Math.sin(ep.angle)};
+  } else {
+    ep.pos = {x:0,y:0};
+  }
+  ep.disp = {x:0,y:0}; ep.vel = {x:0,y:0};
+  ep.springK = ep.mass>100 ? 80 : ep.mass>10 ? 40 : ep.mass>1 ? 20 : 5;
+  ep.bodyLevel = calcBodyLevel(ep.mass); ep.bodyMaxLevel = ep.bodyLevel;
+  ep.orbX = ep.pos.x; ep.orbY = ep.pos.y;
+});
+
+// ── BODIES ARRAY ──
+const BODIES = [
+  {id:'sol',name:'Sol',type:'STAR',mass:333000,pos:{x:0,y:0},r:0.005,gameR:50,color:'#f59e0b',glow:'#fef3c7',isStar:true,alive:true,orb:null},
+  {id:'mercury',name:'Mercury',type:'ROCKY',mass:0.0553,pos:PP.Mercury,r:PP.Mercury.r_au,orb:ORBITAL.Mercury,gameR:5,color:'#94a3b8',glow:'#cbd5e1',xp:15,alive:true,moons:[]},
+  {id:'venus',name:'Venus',type:'TERRESTRIAL',mass:0.815,pos:PP.Venus,r:PP.Venus.r_au,orb:ORBITAL.Venus,gameR:11,color:'#fbbf24',glow:'#fde68a',xp:40,alive:true,fact:'Hottest planet — 465°C surface, retrograde rotation.',moons:[]},
+  {id:'earth',name:'Earth',type:'TERRESTRIAL',mass:1.000,pos:PP.Earth,r:PP.Earth.r_au,orb:ORBITAL.Earth,gameR:13,color:'#2563eb',glow:'#93c5fd',isPlayer:true,alive:true,
+    moons:[{id:'luna',name:'Luna',type:'MOON',mass:0.0123,gameR:5,orbitR_px:40,color:'#d1d5db',glow:'#f3f4f6',xp:20,speed:0.018,angle:0.8,alive:true}]},
+  {id:'mars',name:'Mars',type:'ROCKY',mass:0.107,pos:PP.Mars,r:PP.Mars.r_au,orb:ORBITAL.Mars,gameR:8,color:'#dc2626',glow:'#fca5a5',xp:25,alive:true,fact:'Two captured-asteroid moons: Phobos & Deimos.',
+    moons:[
+      {id:'phobos',name:'Phobos',type:'MOON',mass:1.8e-9,gameR:2,orbitR_px:22,color:'#78716c',glow:'#a8a29e',xp:2,speed:0.04,angle:1.2,alive:true},
+      {id:'deimos',name:'Deimos',type:'MOON',mass:1.5e-10,gameR:2,orbitR_px:34,color:'#a8a29e',glow:'#d4d4d8',xp:1,speed:0.025,angle:0.3,alive:true},
+    ]},
+  {id:'apophis',name:'Apophis',type:'NEO',mass:1.35e-8,pos:cpos(0.9224,340),r:0.9224,orb:{a:0.9224,e:0.1911,peri:126.4,L0:0,n:40632},gameR:2,color:'#f97316',glow:'#fb923c',xp:30,alive:true,fact:'Will pass Earth at 31,600 km on Apr 13 2029!'},
+  {id:'bennu',name:'Bennu',type:'NEO',mass:7.3e-11,pos:cpos(1.1264,250),r:1.1264,orb:{a:1.1264,e:0.2037,peri:66.2,L0:185,n:30100},gameR:2,color:'#84cc16',glow:'#bef264',xp:28,alive:true,fact:'OSIRIS-REx returned a sample to Earth in 2023.'},
+  {id:'eros',name:'Eros',type:'NEO',mass:6.7e-9,pos:cpos(1.458,150),r:1.458,orb:{a:1.458,e:0.223,peri:178,L0:125,n:20444},gameR:3,color:'#d4a0b0',glow:'#f0c0cc',xp:22,alive:true},
+  {id:'ryugu',name:'Ryugu',type:'NEO',mass:4.5e-10,pos:cpos(1.1896,80),r:1.1896,orb:{a:1.1896,e:0.1902,peri:211,L0:276,n:27757},gameR:2,color:'#78716c',glow:'#a8a29e',xp:26,alive:true},
+  {id:'didymos',name:'Didymos',type:'NEO',mass:5.4e-10,pos:cpos(1.644,200),r:1.644,orb:{a:1.644,e:0.384,peri:320,L0:348,n:17075},gameR:2,color:'#0ea5e9',glow:'#7dd3fc',xp:20,alive:true,fact:'NASA DART impacted its moonlet Dimorphos in 2022!'},
+  {id:'phaethon',name:'Phaethon',type:'NEO',mass:1.3e-8,pos:cpos(1.271,200),r:1.271,orb:{a:1.271,e:0.890,peri:322,L0:200,n:26043},gameR:2,color:'#64748b',glow:'#94a3b8',xp:25,alive:true,fact:'Source of the Geminid meteor shower — a rock comet.'},
+  {id:'ceres',name:'Ceres',type:'DWARF PLANET',mass:0.000157,pos:cpos(2.769,6),r:2.769,orb:{a:2.769,e:0.076,peri:73,L0:95,n:78.2},gameR:4,color:'#8b8fa8',glow:'#b0b5cc',xp:8,alive:true},
+  {id:'vesta',name:'Vesta',type:'ASTEROID',mass:6.6e-5,pos:cpos(2.362,158),r:2.362,orb:{a:2.362,e:0.089,peri:150,L0:175,n:98.8},gameR:3,color:'#6b7280',glow:'#9ca3af',xp:5,alive:true},
+  {id:'pallas',name:'Pallas',type:'ASTEROID',mass:3.3e-5,pos:cpos(2.771,233),r:2.771,orb:{a:2.771,e:0.231,peri:173,L0:220,n:77.9},gameR:3,color:'#71717a',glow:'#a1a1aa',xp:5,alive:true},
+  {id:'juno',name:'Juno',type:'ASTEROID',mass:1.5e-5,pos:cpos(2.668,310),r:2.668,orb:{a:2.668,e:0.256,peri:248,L0:300,n:82.7},gameR:2,color:'#64748b',glow:'#94a3b8',xp:4,alive:true},
+  {id:'hygiea',name:'Hygiea',type:'ASTEROID',mass:4.1e-5,pos:cpos(3.14,72),r:3.14,orb:{a:3.14,e:0.117,peri:313,L0:65,n:64.4},gameR:3,color:'#475569',glow:'#64748b',xp:5,alive:true},
+  {id:'psyche',name:'Psyche',type:'ASTEROID',mass:2.7e-5,pos:cpos(2.92,110),r:2.92,orb:{a:2.92,e:0.134,peri:228,L0:110,n:70},gameR:3,color:'#a78bfa',glow:'#c4b5fd',xp:9,alive:true,fact:'NASA Psyche mission en route — metallic core of an ancient protoplanet.'},
+  {id:'eunomia',name:'Eunomia',type:'ASTEROID',mass:1.1e-5,pos:cpos(2.644,230),r:2.644,orb:{a:2.644,e:0.187,peri:97.8,L0:168,n:8375},gameR:3,color:'#94a3b8',glow:'#cbd5e1',xp:6,alive:true},
+  {id:'iris',name:'Iris',type:'ASTEROID',mass:8.3e-6,pos:cpos(2.386,320),r:2.386,orb:{a:2.386,e:0.231,peri:145,L0:248,n:9768},gameR:2,color:'#7dd3fc',glow:'#bae6fd',xp:5,alive:true},
+  {id:'hebe',name:'Hebe',type:'ASTEROID',mass:5.6e-6,pos:cpos(2.426,50),r:2.426,orb:{a:2.426,e:0.201,peri:239,L0:42,n:9526},gameR:2,color:'#d8b4fe',glow:'#e9d5ff',xp:5,alive:true},
+  {id:'davida',name:'Davida',type:'ASTEROID',mass:4.0e-5,pos:cpos(3.175,100),r:3.175,orb:{a:3.175,e:0.186,peri:107,L0:212,n:6361},gameR:3,color:'#475569',glow:'#64748b',xp:7,alive:true},
+  {id:'interamnia',name:'Interamnia',type:'ASTEROID',mass:3.6e-5,pos:cpos(3.063,55),r:3.063,orb:{a:3.063,e:0.153,peri:96,L0:55,n:66},gameR:3,color:'#64748b',glow:'#94a3b8',xp:6,alive:true},
+  {id:'bamberga',name:'Bamberga',type:'ASTEROID',mass:4.0e-6,pos:cpos(2.686,200),r:2.686,orb:{a:2.686,e:0.341,peri:43,L0:200,n:82},gameR:2,color:'#374151',glow:'#6b7280',xp:5,alive:true},
+  {id:'achilles',name:'Achilles',type:'TROJAN L4',mass:2.1e-8,pos:cpos(5.185,179),r:5.185,orb:{a:5.185,e:0.149,peri:325,L0:97,n:3040},gameR:3,color:'#fbbf24',glow:'#fde68a',xp:12,alive:true},
+  {id:'hektor',name:'Hektor',type:'TROJAN L4',mass:9.8e-8,pos:cpos(5.228,177),r:5.228,orb:{a:5.228,e:0.024,peri:178,L0:92,n:3018},gameR:4,color:'#f59e0b',glow:'#fcd34d',xp:14,alive:true},
+  {id:'patroclus',name:'Patroclus',type:'TROJAN L5',mass:6.5e-8,pos:cpos(5.227,57),r:5.227,orb:{a:5.227,e:0.139,peri:309,L0:332,n:3018},gameR:3,color:'#c084fc',glow:'#e9d5ff',xp:12,alive:true},
+  {id:'jupiter',name:'Jupiter',type:'GAS GIANT',mass:317.83,pos:PP.Jupiter,r:PP.Jupiter.r_au,orb:ORBITAL.Jupiter,gameR:36,color:'#d97706',glow:'#fde68a',isDanger:true,alive:true,fact:'317× Earth mass — 95 confirmed moons.',
+    moons:[
+      {id:'io',name:'Io',type:'MOON',mass:0.015,gameR:5,orbitR_px:55,color:'#facc15',glow:'#fef08a',xp:10,speed:0.012,angle:0.5,alive:true},
+      {id:'europa',name:'Europa',type:'MOON',mass:0.008,gameR:5,orbitR_px:74,color:'#bfdbfe',glow:'#eff6ff',xp:8,speed:0.009,angle:2.1,alive:true},
+      {id:'ganymede',name:'Ganymede',type:'MOON',mass:0.0248,gameR:6,orbitR_px:96,color:'#9ca3af',glow:'#d1d5db',xp:12,speed:0.007,angle:4.4,alive:true},
+      {id:'callisto',name:'Callisto',type:'MOON',mass:0.018,gameR:5,orbitR_px:118,color:'#6b7280',glow:'#9ca3af',xp:10,speed:0.005,angle:1.9,alive:true},
+    ]},
+  {id:'saturn',name:'Saturn',type:'GAS GIANT',mass:95.16,pos:PP.Saturn,r:PP.Saturn.r_au,orb:ORBITAL.Saturn,gameR:30,color:'#b45309',glow:'#fcd34d',isDanger:true,hasRing:true,alive:true,fact:'146 moons. Ring system 282,000 km wide.',
+    moons:[
+      {id:'mimas',name:'Mimas',type:'MOON',mass:6.5e-6,gameR:3,orbitR_px:42,color:'#e2e8f0',glow:'#f8fafc',xp:3,speed:0.015,angle:0.7,alive:true},
+      {id:'enceladus',name:'Enceladus',type:'MOON',mass:1.8e-5,gameR:3,orbitR_px:54,color:'#f0f9ff',glow:'#e0f2fe',xp:4,speed:0.012,angle:2.8,alive:true},
+      {id:'titan',name:'Titan',type:'MOON',mass:0.0225,gameR:6,orbitR_px:130,color:'#f59e0b',glow:'#fde68a',xp:12,speed:0.004,angle:0.9,alive:true},
+      {id:'iapetus',name:'Iapetus',type:'MOON',mass:2.8e-4,gameR:4,orbitR_px:175,color:'#78716c',glow:'#a8a29e',xp:6,speed:0.002,angle:4.7,alive:true},
+    ]},
+  {id:'chiron',name:'Chiron',type:'CENTAUR',mass:2e-6,pos:cpos(13.7,210),r:13.7,orb:{a:13.7,e:0.379,peri:339,L0:210,n:6.7},gameR:3,color:'#6366f1',glow:'#a5b4fc',xp:8,alive:true},
+  {id:'chariklo',name:'Chariklo',type:'CENTAUR',mass:1.5e-5,pos:cpos(15.8,130),r:15.8,orb:{a:15.8,e:0.171,peri:242,L0:338,n:573},gameR:3,color:'#38bdf8',glow:'#7dd3fc',xp:9,alive:true,fact:'Only centaur with a confirmed ring system! Rings discovered 2013.'},
+  {id:'halley',name:"Halley's Comet",type:'COMET',mass:2.2e-7,pos:cpos(17.8,75),r:35,orb:{a:17.834,e:0.967,peri:112,L0:308,n:479},gameR:3,color:'#22d3ee',glow:'#a5f3fc',xp:18,alive:true,fact:'Returns every 75 years. Next perihelion: 2061.'},
+  {id:'67p',name:'67P/C-G',type:'COMET',mass:1.0e-8,pos:cpos(3.463,180),r:3.463,orb:{a:3.463,e:0.641,peri:12,L0:136,n:5590},gameR:2,color:'#a3e635',glow:'#d9f99d',xp:12,alive:true},
+  {id:'uranus',name:'Uranus',type:'ICE GIANT',mass:14.536,pos:PP.Uranus,r:PP.Uranus.r_au,orb:ORBITAL.Uranus,gameR:20,color:'#67e8f9',glow:'#a5f3fc',isDanger:true,alive:true,
+    moons:[
+      {id:'titania',name:'Titania',type:'MOON',mass:5.9e-4,gameR:5,orbitR_px:70,color:'#e2e8f0',glow:'#f1f5f9',xp:8,speed:0.006,angle:5.8,alive:true},
+      {id:'oberon',name:'Oberon',type:'MOON',mass:5.5e-4,gameR:5,orbitR_px:85,color:'#78716c',glow:'#a8a29e',xp:8,speed:0.004,angle:2.2,alive:true},
+    ]},
+  {id:'neptune',name:'Neptune',type:'ICE GIANT',mass:17.147,pos:PP.Neptune,r:PP.Neptune.r_au,orb:ORBITAL.Neptune,gameR:19,color:'#3b82f6',glow:'#93c5fd',isDanger:true,alive:true,
+    moons:[
+      {id:'triton',name:'Triton',type:'MOON',mass:0.00358,gameR:5,orbitR_px:35,color:'#e0f2fe',glow:'#bfdbfe',xp:7,speed:-0.008,angle:0.6,alive:true},
+    ]},
+  {id:'pluto',name:'Pluto',type:'DWARF PLANET',mass:0.0022,pos:cpos(39.48,277),r:39.48,orb:{a:39.48,e:0.249,peri:224,L0:239,n:1.451},gameR:4,color:'#a78bfa',glow:'#c4b5fd',xp:10,alive:true,
+    moons:[{id:'charon',name:'Charon',type:'MOON',mass:0.000254,gameR:4,orbitR_px:18,color:'#d1d5db',glow:'#e5e7eb',xp:5,speed:0.02,angle:1.5,alive:true}]},
+  {id:'quaoar',name:'Quaoar',type:'DWARF PLANET',mass:2.1e-4,pos:cpos(43.4,290),r:43.4,orb:{a:43.4,e:0.039,peri:147,L0:290,n:1.178},gameR:4,color:'#fb7185',glow:'#fda4af',xp:10,alive:true,fact:'Has its own ring system discovered in 2022!'},
+  {id:'orcus',name:'Orcus',type:'DWARF PLANET',mass:1.1e-4,pos:cpos(39.2,198),r:39.2,orb:{a:39.2,e:0.225,peri:73,L0:198,n:1.457},gameR:4,color:'#6366f1',glow:'#818cf8',xp:9,alive:true},
+  {id:'varuna',name:'Varuna',type:'KBO',mass:2.8e-4,pos:cpos(42.9,88),r:42.9,orb:{a:42.9,e:0.051,peri:97,L0:88,n:1.194},gameR:4,color:'#0ea5e9',glow:'#38bdf8',xp:8,alive:true},
+  {id:'arrokoth',name:'Arrokoth',type:'KBO',mass:7.5e-11,pos:cpos(44.6,45),r:44.6,orb:{a:44.6,e:0.034,peri:174,L0:45,n:1.139},gameR:2,color:'#fbbf24',glow:'#fde68a',xp:8,alive:true,fact:'Ultima Thule — New Horizons flyby Jan 2019. A contact binary snowman.'},
+  {id:'haumea',name:'Haumea',type:'DWARF PLANET',mass:6.7e-4,pos:cpos(43.1,197),r:43.1,orb:{a:43.1,e:0.195,peri:239,L0:197,n:1.206},gameR:4,color:'#f0abfc',glow:'#e879f9',xp:9,alive:true},
+  {id:'makemake',name:'Makemake',type:'DWARF PLANET',mass:5.0e-4,pos:cpos(45.8,140),r:45.8,orb:{a:45.8,e:0.159,peri:298,L0:140,n:1.124},gameR:4,color:'#fb923c',glow:'#fdba74',xp:9,alive:true},
+  {id:'eris',name:'Eris',type:'DWARF PLANET',mass:0.0028,pos:cpos(67.8,22),r:67.8,orb:{a:67.8,e:0.442,peri:151,L0:22,n:0.645},gameR:4,color:'#e2e8f0',glow:'#f8fafc',xp:11,alive:true,fact:'More massive than Pluto — its discovery triggered reclassification in 2006.'},
+  {id:'gonggong',name:'Gonggong',type:'DWARF PLANET',mass:1.7e-4,pos:cpos(67.3,240),r:67.3,orb:{a:67.3,e:0.499,peri:207,L0:223,n:65.2},gameR:4,color:'#f9a8d4',glow:'#fbcfe8',xp:12,alive:true},
+  {id:'sedna',name:'Sedna',type:'INNER OORT',mass:8e-6,pos:cpos(506,144),r:506,gameR:3,color:'#e11d48',glow:'#fb7185',xp:15,alive:true,fact:'Orbital period ~11,400 years. May hint at Planet Nine.'},
+  {id:'blackhole',name:'Sagittarius A*',type:'BLACK HOLE',mass:4000000,pos:{x:800,y:0},gameR:20,color:'#000000',glow:'#a78bfa',isBlackHole:true,isDanger:true,alive:true},
+];
+
+// Init body levels on all BODIES
+BODIES.forEach(body=>{
+  if(body.isStar||body.isBlackHole||body.isPlayer) return;
+  body.bodyLevel = calcBodyLevel(body.mass);
+  body.bodyMaxLevel = body.bodyLevel;
+  if(body.moons) body.moons.forEach(m=>{ m.bodyLevel=1; m.bodyMaxLevel=1; });
+});
+
+// ── UPGRADES ──
+const UPGRADES = [
+  {id:'moon',       name:'Add a Moon',      icon:'🌕', cost:50,  desc:'+25% XP per smash. A new moon orbits Earth.',     owned:0, max:3},
+  {id:'gravity',    name:'Gravity Boost',   icon:'🔭', cost:100, desc:'Connection range +30% per level.',                owned:0, max:3},
+  {id:'shield',     name:'Titanium Shield', icon:'🛡', cost:75,  desc:'Max HP +50 per level.',                           owned:0, max:3},
+  {id:'mass_amp',   name:'Mass Amplifier',  icon:'⚡', cost:80,  desc:'Absorb 25% more mass per smash.',                 owned:0, max:3},
+  {id:'smash_king', name:'Smash King',      icon:'💥', cost:120, desc:'Hard-smash planets up to 4× your mass.',          owned:0, max:1},
+  {id:'start_lvl',  name:'Head Start',      icon:'⭐', cost:150, desc:'Begin next game at Level 3.',                     owned:0, max:1},
+];
+
+// ── PLAYER ──
+const player = {
+  body: BODIES.find(b=>b.isPlayer),
+  mass:1.000, hp:100, hpMax:100,
+  xp:0, xpNext:100, level:1, smashed:0,
+  coins:0,
+  levelTitles:['Terrestrial','Mega-World','Super-Earth','Mini-Neptune','Ice Giant','Gas Giant','Proto-Star','Brown Dwarf','White Dwarf','Neutron Star','Black Hole'],
+  connectionRange:1.8,
+  traveling:false, travelProgress:0, travelFrom:null, travelTo:null,
+  pos:{...PP.Earth},
+  orbX:PP.Earth.x, orbY:PP.Earth.y,
+};
+
+// Check if Head Start purchased (simulated — in real iOS would use localStorage)
+// For now just start normal
+const cam = {
+  x:PP.Earth.x, y:PP.Earth.y, zoom:100,
+  minZoom:1, maxZoom:500,
+  dragging:false, dragStart:null, camAtDrag:null, moved:false,
+  free:false,
+};
+
+let dragState={active:false,started:false,downX:0,downY:0};
+let dragTarget=null;
+let screenShake=null;
+
+let stars=[];
+function initStars(){
+  stars=[];
+  for(let i=0;i<500;i++){
+    stars.push({x:(Math.random()-.5)*400,y:(Math.random()-.5)*400,r:Math.random()*1.4,bright:Math.random(),twinkle:Math.random()*Math.PI*2,speed:.4+Math.random()*.8});
+  }
+}
+
+// ── Spring Physics Init ──
+function initPhysics(){
+  BODIES.forEach(body=>{
+    if(body.isStar||body.isBlackHole||body.isPlayer||!body.orb) return;
+    body.disp={x:0,y:0}; body.vel={x:0,y:0};
+    body.orbX=body.pos.x; body.orbY=body.pos.y;
+    if     (body.mass>100) body.springK=80;
+    else if(body.mass>10)  body.springK=40;
+    else if(body.mass>1)   body.springK=20;
+    else if(body.mass>0.01)body.springK=5;
+    else                    body.springK=2;
+  });
+}
+
+// ── Particles ──
+let particles=[];
+function spawnBurst(wx,wy,color,n=14){
+  for(let i=0;i<n;i++){
+    const a=(i/n)*Math.PI*2+Math.random()*.5;
+    const spd=0.015+Math.random()*0.04;
+    particles.push({wx,wy,vx:Math.cos(a)*spd,vy:Math.sin(a)*spd,life:1,decay:.014+Math.random()*.014,r:.006+Math.random()*.02,color});
+  }
+}
+function spawnAbsorbRing(wx,wy,color){
+  for(let i=0;i<24;i++){
+    const a=(i/24)*Math.PI*2;
+    particles.push({wx:wx+Math.cos(a)*.05,wy:wy+Math.sin(a)*.05,vx:-Math.cos(a)*.012,vy:-Math.sin(a)*.012,life:1,decay:.018,r:.008,color});
+  }
+}
+function spawnCoinBurst(wx,wy,count){
+  for(let i=0;i<Math.min(count,12);i++){
+    const a=Math.random()*Math.PI*2;
+    const spd=0.02+Math.random()*0.05;
+    particles.push({wx,wy,vx:Math.cos(a)*spd,vy:Math.sin(a)*spd,life:1,decay:.02,r:.005,color:'#f59e0b'});
+  }
+}
+
+// ── Coordinate transforms ──
+function w2s(wx,wy){const cx=canvas.width/2,cy=canvas.height/2;return{sx:cx+(wx-cam.x)*cam.zoom,sy:cy-(wy-cam.y)*cam.zoom};}
+function s2w(sx,sy){const cx=canvas.width/2,cy=canvas.height/2;return{wx:(sx-cx)/cam.zoom+cam.x,wy:-((sy-cy)/cam.zoom)+cam.y};}
+function screenR(body){const base=body.isStar?50:(body.isBlackHole?20:body.gameR);return Math.max(3,base*Math.sqrt(cam.zoom/100));}
+
+let linePhase=0;
+function advanceOrbits(dt){
+  const dayRate=dt*speedMult;
+  simDayOffset+=dayRate;
+  BODIES.forEach(body=>{
+    if(!body.alive||body.isStar||body.isBlackHole||body.isPlayer||!body.orb) return;
+    const o=body.orb;
+    let L=(o.L0+o.n*J2000_CY+(simDayOffset*o.n/36525))%360; if(L<0)L+=360;
+    const M=(L-o.peri)*Math.PI/180; let E=M;
+    for(let i=0;i<8;i++) E=M+o.e*Math.sin(E);
+    const nu=2*Math.atan2(Math.sqrt(1+o.e)*Math.sin(E/2),Math.sqrt(1-o.e)*Math.cos(E/2));
+    const r=o.a*(1-o.e*Math.cos(E)); const lon=nu+o.peri*Math.PI/180;
+    body.orbX=r*Math.cos(lon); body.orbY=r*Math.sin(lon);
+    body.pos={x:body.orbX+(body.disp?body.disp.x:0),y:body.orbY+(body.disp?body.disp.y:0),r_au:r};
+  });
+  BODIES.forEach(body=>{
+    if(!body.moons) return;
+    body.moons.forEach(m=>{if(m.alive)m.angle+=m.speed*dayRate*0.1;});
+  });
+}
+
+function updateExoplanets(dt){
+  EXOPLANET_BODIES.forEach(ep=>{
+    if(!ep.alive) return;
+    const star=STAR_SYSTEMS.find(s=>s.name===ep.starRef);
+    if(!star) return;
+    ep.angle+=ep.speed*dt*speedMult*0.003;
+    ep.orbX=star.pos.x+ep.orbitR*Math.cos(ep.angle);
+    ep.orbY=star.pos.y+ep.orbitR*Math.sin(ep.angle);
+    ep.pos={x:ep.orbX+(ep.disp?ep.disp.x:0),y:ep.orbY+(ep.disp?ep.disp.y:0)};
+  });
+}
+
+function physicsUpdate(dt){
+  const gStr=Math.min(Math.sqrt(player.mass+0.1)*2.0,30);
+  const px=player.pos.x,py=player.pos.y;
+
+  // Solar system bodies
+  BODIES.forEach(body=>{
+    if(!body.alive||body.isPlayer||body.isStar||body.isBlackHole) return;
+    if(body.orbX===undefined||!body.disp) return;
+    const k=body.springK||4;
+    let ax=-k*body.disp.x,ay=-k*body.disp.y;
+    const gdx=px-body.orbX,gdy=py-body.orbY;
+    const gdist=Math.sqrt(gdx*gdx+gdy*gdy);
+    const maxGRange=player.connectionRange*3.5;
+    if(gdist>0.05&&gdist<maxGRange){
+      const falloff=Math.max(0,1-(gdist/maxGRange)*(gdist/maxGRange));
+      const gForce=gStr*falloff/(gdist+0.4);
+      ax+=(gdx/gdist)*gForce; ay+=(gdy/gdist)*gForce;
+    }
+    body.vel.x=body.vel.x*0.93+ax*dt; body.vel.y=body.vel.y*0.93+ay*dt;
+    body.disp.x+=body.vel.x*dt; body.disp.y+=body.vel.y*dt;
+    const dispMag=Math.sqrt(body.disp.x*body.disp.x+body.disp.y*body.disp.y);
+    const maxDisp=0.3/Math.sqrt(k);
+    if(dispMag>maxDisp){const f=maxDisp/dispMag;body.disp.x*=f;body.disp.y*=f;body.vel.x*=0.4;body.vel.y*=0.4;}
+    body.pos.x=body.orbX+body.disp.x; body.pos.y=body.orbY+body.disp.y;
+  });
+
+  // Exoplanet elastic physics
+  EXOPLANET_BODIES.forEach(ep=>{
+    if(!ep.alive||!ep.disp) return;
+    const k=ep.springK||4;
+    let ax=-k*ep.disp.x,ay=-k*ep.disp.y;
+    const gdx=px-ep.orbX,gdy=py-ep.orbY;
+    const gdist=Math.sqrt(gdx*gdx+gdy*gdy);
+    const maxGRange=player.connectionRange*3.5;
+    if(gdist>0.05&&gdist<maxGRange){
+      const falloff=Math.max(0,1-(gdist/maxGRange)*(gdist/maxGRange));
+      const gForce=gStr*falloff/(gdist+0.4);
+      ax+=(gdx/gdist)*gForce; ay+=(gdy/gdist)*gForce;
+    }
+    ep.vel.x=ep.vel.x*0.93+ax*dt; ep.vel.y=ep.vel.y*0.93+ay*dt;
+    ep.disp.x+=ep.vel.x*dt; ep.disp.y+=ep.vel.y*dt;
+    const dispMag=Math.sqrt(ep.disp.x*ep.disp.x+ep.disp.y*ep.disp.y);
+    const maxDisp=0.3/Math.sqrt(k);
+    if(dispMag>maxDisp){const f=maxDisp/dispMag;ep.disp.x*=f;ep.disp.y*=f;ep.vel.x*=0.4;ep.vel.y*=0.4;}
+    ep.pos.x=ep.orbX+ep.disp.x; ep.pos.y=ep.orbY+ep.disp.y;
+  });
+
+  if(!dragState.active){
+    const f=Math.min(1,7*dt);
+    player.pos.x+=(player.orbX-player.pos.x)*f;
+    player.pos.y+=(player.orbY-player.pos.y)*f;
+  }
+}
+
+function smashImpulse(wx,wy,smashMass){
+  const strength=Math.sqrt(Math.max(smashMass,1e-6)+0.5)*0.8;
+  const allBodies=[...BODIES,...EXOPLANET_BODIES];
+  allBodies.forEach(body=>{
+    if(!body.alive||!body.vel||body.isPlayer||body.isStar) return;
+    const bx=body.orbX!==undefined?body.orbX:body.pos.x;
+    const by=body.orbX!==undefined?body.orbY:body.pos.y;
+    const dx=bx-wx,dy=by-wy;
+    const dist=Math.sqrt(dx*dx+dy*dy);
+    if(dist<12&&dist>0.01){const f=strength/(dist*1.2+0.2);body.vel.x+=(dx/dist)*f;body.vel.y+=(dy/dist)*f;}
+  });
+  screenShake={intensity:Math.min(22,Math.sqrt(Math.max(smashMass,1e-6))*10+4),decay:0.82};
+}
+
+// Orbital perturbation when smashed
+function perturbOrbit(body){
+  if(!body.orb) return;
+  body.orb = {...body.orb};
+  body.orb.e = Math.max(0.001, Math.min(0.95, body.orb.e + (Math.random()-0.5)*0.06));
+  body.orb.L0 = (body.orb.L0 + (Math.random()-0.5)*15 + 360) % 360;
+  body.orb.peri = (body.orb.peri + (Math.random()-0.5)*8 + 360) % 360;
+}
+
+// ── SMASH BODY ──
+function smashBody(body, isMoon, parentBody, hardSmash){
+  const isExo = EXOPLANET_BODIES.includes(body);
+  const maxLevel = body.bodyMaxLevel || 1;
+  const curLevel = body.bodyLevel || 1;
+  const xpPerLevel = Math.max(1, Math.round((body.xp || Math.round(body.mass*25+5)) / maxLevel));
+  const coinEarn = Math.max(1, Math.floor(curLevel * 5 + Math.sqrt(body.mass||0.001) * 8));
+  const moonBonus = 1 + (UPGRADES.find(u=>u.id==='moon').owned * 0.25);
+  const massAmpBonus = 1 + (UPGRADES.find(u=>u.id==='mass_amp').owned * 0.25);
+
+  if(hardSmash){
+    // Hard smash: planet loses a level, player takes HP damage
+    const massFactor = body.mass / player.mass;
+    const hpDmg = Math.min(40, Math.round(massFactor * 20));
+    player.hp = Math.max(0, player.hp - hpDmg);
+    const xpGain = Math.round(xpPerLevel * 0.5 * moonBonus);
+    player.xp += xpGain;
+    player.coins += Math.floor(coinEarn * 0.5);
+    player.smashed++;
+    body.bodyLevel = Math.max(0, (body.bodyLevel||1) - 1);
+
+    // Shake harder on hard smash
+    screenShake = {intensity: Math.min(35, massFactor*18+8), decay: 0.78};
+    spawnBurst(player.pos.x, player.pos.y, '#f59e0b', 22);
+    spawnCoinBurst(player.pos.x, player.pos.y, Math.floor(coinEarn*0.5));
+    perturbOrbit(body);
+
+    if(body.bodyLevel <= 0){
+      // Final hit — destroy
+      const finalXp = Math.round(xpPerLevel * moonBonus);
+      player.xp += finalXp;
+      player.coins += coinEarn;
+      player.mass = parseFloat((player.mass + body.mass * 0.1 * massAmpBonus).toFixed(6));
+      player.body.mass = player.mass;
+      player.body.gameR = Math.min(55,13+(player.mass-1)*2);
+      player.connectionRange = 1.8 * Math.pow(player.mass,.3);
+      if(isMoon&&parentBody) parentBody.moons = parentBody.moons.filter(m=>m!==body);
+      else if(isExo) body.alive = false;
+      else body.alive = false;
+      spawnAbsorbRing(player.pos.x, player.pos.y, body.color);
+      showToast(`💥 ${body.name} DESTROYED! +${finalXp} XP +${coinEarn} ⚡`,'#f59e0b');
+    } else {
+      // Weakened body — shrink it visually
+      body.gameR = Math.max(2, Math.round(body.gameR * 0.88));
+      showToast(`⚡ HARD SMASH ${body.name}! LVL ${body.bodyLevel+1}→${body.bodyLevel} −${hpDmg} HP +${xpGain} XP`,'#f59e0b');
+    }
+    if(body.fact&&body.bodyLevel===0) setTimeout(()=>showToast(`📡 ${body.fact}`,'#22d3ee'),1200);
+  } else {
+    // Normal smash — body loses a level
+    const xpGain = Math.round(xpPerLevel * moonBonus);
+    player.xp += xpGain;
+    player.coins += coinEarn;
+    player.smashed++;
+    body.bodyLevel = Math.max(0, (body.bodyLevel||1) - 1);
+    spawnBurst(player.pos.x, player.pos.y, body.glow||'#fff', 18);
+    spawnCoinBurst(player.pos.x, player.pos.y, coinEarn);
+    perturbOrbit(body);
+
+    if(body.bodyLevel <= 0){
+      player.mass = parseFloat((player.mass + body.mass * 0.35 * massAmpBonus).toFixed(6));
+      player.body.mass = player.mass;
+      player.body.gameR = Math.min(55,13+(player.mass-1)*2);
+      player.connectionRange = 1.8 * Math.pow(player.mass,.3);
+      if(isMoon&&parentBody) parentBody.moons = parentBody.moons.filter(m=>m!==body);
+      else if(isExo) body.alive = false;
+      else body.alive = false;
+      spawnAbsorbRing(player.pos.x, player.pos.y, body.color);
+      showToast(`💥 ${body.name} ABSORBED! +${xpGain} XP +${coinEarn} ⚡`,'#10b981');
+      if(body.fact) setTimeout(()=>showToast(`📡 ${body.fact}`,'#22d3ee'),1200);
+    } else {
+      body.gameR = Math.max(2, Math.round(body.gameR * 0.88));
+      showToast(`💥 ${body.name} HIT! LVL ${body.bodyLevel+1}→${body.bodyLevel} +${xpGain} XP +${coinEarn} ⚡`,'#10b981');
+    }
+    smashImpulse(player.pos.x, player.pos.y, body.mass);
+  }
+
+  // Level up check
+  while(player.xp >= player.xpNext){
+    player.level++;
+    player.xp -= player.xpNext;
+    player.xpNext = Math.round(player.xpNext*1.65);
+    player.hp = Math.min(player.hpMax, player.hp+35);
+    player.hpMax += 15;
+    const prev=player.levelTitles[Math.min(player.level-2,player.levelTitles.length-1)];
+    const next=player.levelTitles[Math.min(player.level-1,player.levelTitles.length-1)];
+    document.getElementById('pLevel').textContent=player.level;
+    document.getElementById('pClass').textContent=next;
+    document.getElementById('lvlSub').textContent=`${prev} → ${next}`;
+    const el=document.getElementById('lvlup');
+    el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
+    setTimeout(()=>el.classList.remove('show'),2600);
+    showToast(`⭐ LEVEL ${player.level} — ${next}!`,'#f59e0b');
+  }
+  updateHUD();
+  updateSidePanel(getConnections());
+}
+
+// ── DRAW FUNCTIONS ──
+function drawOrbits(){
+  const sun=w2s(0,0);
+  BODIES.forEach(body=>{
+    if(!body.alive||body.isStar||body.isBlackHole||!body.orb) return;
+    const o=body.orb; if(o.a*cam.zoom<0.5) return;
+    const a=o.a*cam.zoom,b=a*Math.sqrt(1-o.e*o.e);
+    const cx=-o.a*o.e*cam.zoom; const peri_rad=o.peri*Math.PI/180;
+    ctx.save(); ctx.translate(sun.sx,sun.sy); ctx.rotate(-peri_rad);
+    ctx.beginPath(); ctx.ellipse(cx,0,a,b,0,0,Math.PI*2);
+    ctx.strokeStyle=body.isPlayer?'rgba(96,165,250,.10)':'rgba(80,160,255,.04)';
+    ctx.lineWidth=0.7; ctx.stroke(); ctx.restore();
+  });
+  // Exoplanet orbits
+  if(cam.zoom<8){
+    EXOPLANET_BODIES.forEach(ep=>{
+      if(!ep.alive) return;
+      const star=STAR_SYSTEMS.find(s=>s.name===ep.starRef); if(!star) return;
+      const sc=w2s(star.pos.x,star.pos.y);
+      const r=ep.orbitR*cam.zoom;
+      if(r<1) return;
+      ctx.beginPath(); ctx.arc(sc.sx,sc.sy,r,0,Math.PI*2);
+      ctx.strokeStyle='rgba(80,160,255,.06)'; ctx.lineWidth=0.5; ctx.stroke();
+    });
+  }
+}
+
+function drawConnections(conns){
+  linePhase+=0.04;
+  const p=w2s(player.pos.x,player.pos.y);
+  conns.forEach(conn=>{
+    const bpos=conn.isMoon?{x:conn.moonWx,y:conn.moonWy}:conn.body.pos;
+    const bp=w2s(bpos.x,bpos.y);
+    const color=conn.canSmash?'#10b981':(conn.canHardSmash?'#f59e0b':(conn.isDanger?'#ef4444':'#8b5cf6'));
+    const alpha=conn.canSmash?0.75:(conn.canHardSmash?0.65:(conn.isDanger?0.5:0.4));
+
+    let cpX=(p.sx+bp.sx)/2,cpY=(p.sy+bp.sy)/2;
+    const body=conn.body;
+    if(body.disp&&body.orbX!==undefined){
+      const orbSP=w2s(body.orbX,body.orbY);
+      const dispMag=Math.sqrt(body.disp.x*body.disp.x+body.disp.y*body.disp.y);
+      const maxDisp=0.3/Math.sqrt(body.springK||4);
+      const tension=Math.min(1,dispMag/Math.max(0.001,maxDisp*0.5));
+      cpX=cpX*(1-tension)+orbSP.sx*tension; cpY=cpY*(1-tension)+orbSP.sy*tension;
+    }
+    if(dragState.active){
+      const pdx=player.pos.x-player.orbX,pdy=player.pos.y-player.orbY;
+      const pdist=Math.sqrt(pdx*pdx+pdy*pdy);
+      if(pdist>0.05){
+        const tension=Math.min(0.45,pdist/(player.connectionRange*0.8));
+        const orbP=w2s(player.orbX,player.orbY);
+        cpX=cpX*(1-tension)+orbP.sx*tension; cpY=cpY*(1-tension)+orbP.sy*tension;
+      }
+    }
+
+    ctx.save();
+    const grad=ctx.createLinearGradient(p.sx,p.sy,bp.sx,bp.sy);
+    grad.addColorStop(0,color+'cc'); grad.addColorStop(.4,color+'88'); grad.addColorStop(1,color+'44');
+    ctx.beginPath(); ctx.moveTo(p.sx,p.sy); ctx.quadraticCurveTo(cpX,cpY,bp.sx,bp.sy);
+    ctx.strokeStyle=grad; ctx.lineWidth=conn.canSmash?4:(conn.canHardSmash?3.5:2.5);
+    ctx.globalAlpha=alpha*.3; ctx.filter='blur(4px)'; ctx.stroke(); ctx.filter='none';
+    ctx.beginPath(); ctx.moveTo(p.sx,p.sy); ctx.quadraticCurveTo(cpX,cpY,bp.sx,bp.sy);
+    ctx.strokeStyle=grad; ctx.lineWidth=conn.canSmash?1.8:(conn.canHardSmash?1.6:1.2);
+    ctx.globalAlpha=alpha;
+    const dl=conn.canSmash?10:(conn.canHardSmash?8:6),gap=conn.canSmash?6:(conn.canHardSmash?5:8);
+    ctx.setLineDash([dl,gap]); ctx.lineDashOffset=-linePhase*(conn.canSmash?2:1); ctx.stroke();
+    ctx.setLineDash([]); ctx.globalAlpha=1; ctx.restore();
+
+    const pr=4+2*Math.sin(linePhase*2+conn.dist);
+    ctx.beginPath(); ctx.arc(bp.sx,bp.sy,pr,0,Math.PI*2);
+    ctx.strokeStyle=color; ctx.lineWidth=1;
+    ctx.globalAlpha=.5*Math.abs(Math.sin(linePhase+conn.dist)); ctx.stroke(); ctx.globalAlpha=1;
+
+    if(conn.canSmash||conn.canHardSmash){
+      const mx=(p.sx+bp.sx)/2,my=(p.sy+bp.sy)/2;
+      ctx.font='bold 8px -apple-system,sans-serif'; ctx.textAlign='center';
+      ctx.fillStyle=color; ctx.globalAlpha=.6+.4*Math.sin(linePhase*3);
+      ctx.fillText(conn.canSmash?'◆':'⚡',mx,my); ctx.globalAlpha=1;
+    }
+  });
+}
+
+function drawGravityWell(){
+  if(player.traveling) return;
+  const{sx,sy}=w2s(player.pos.x,player.pos.y);
+  const rangeR=player.connectionRange*cam.zoom;
+  const massScale=Math.min(1.5,Math.log2(player.mass+1)*0.5);
+  for(let i=0;i<3;i++){
+    const phase=((linePhase*0.28+i*0.333))%1;
+    const r=rangeR*(0.15+phase*0.85); const alpha=(1-phase)*0.13*massScale;
+    ctx.beginPath(); ctx.arc(sx,sy,r,0,Math.PI*2);
+    ctx.strokeStyle=`rgba(96,165,250,${alpha})`; ctx.lineWidth=1.2; ctx.stroke();
+  }
+  if(massScale>0.1){
+    const grad=ctx.createRadialGradient(sx,sy,0,sx,sy,rangeR*0.9);
+    grad.addColorStop(0,`rgba(58,130,246,${massScale*0.05})`); grad.addColorStop(1,'rgba(58,130,246,0)');
+    ctx.beginPath(); ctx.arc(sx,sy,rangeR*0.9,0,Math.PI*2); ctx.fillStyle=grad; ctx.fill();
+  }
+  if(dragState.active){
+    ctx.beginPath(); ctx.arc(sx,sy,player.connectionRange*1.5*cam.zoom,0,Math.PI*2);
+    ctx.strokeStyle='rgba(96,165,250,0.2)'; ctx.lineWidth=1;
+    ctx.setLineDash([4,6]); ctx.stroke(); ctx.setLineDash([]);
+    // Hard smash range
+    const hsmashLimit=UPGRADES.find(u=>u.id==='smash_king').owned?4:3;
+    ctx.beginPath(); ctx.arc(sx,sy,player.connectionRange*hsmashLimit*cam.zoom*0.5,0,Math.PI*2);
+    ctx.strokeStyle='rgba(245,158,11,0.15)'; ctx.lineWidth=1;
+    ctx.setLineDash([3,8]); ctx.stroke(); ctx.setLineDash([]);
+  }
+}
+
+function drawDragGhost(){
+  if(!dragState.active) return;
+  const orbP=w2s(player.orbX,player.orbY);
+  const actP=w2s(player.pos.x,player.pos.y);
+  const dist=Math.hypot(actP.sx-orbP.sx,actP.sy-orbP.sy);
+  if(dist<3) return;
+  const lineColor=dragTarget?(dragTarget.canHardSmash?'#f59e0b':'#10b981'):'#60a5fa';
+  ctx.save();
+  ctx.beginPath(); ctx.moveTo(orbP.sx,orbP.sy); ctx.lineTo(actP.sx,actP.sy);
+  ctx.strokeStyle=lineColor; ctx.lineWidth=1.5; ctx.globalAlpha=0.35;
+  ctx.setLineDash([4,5]); ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha=1;
+  ctx.restore();
+  const sr=screenR(player.body)*0.55;
+  ctx.beginPath(); ctx.arc(orbP.sx,orbP.sy,sr,0,Math.PI*2);
+  ctx.strokeStyle='rgba(96,165,250,0.35)'; ctx.lineWidth=1.5; ctx.stroke();
+  const tension=Math.min(1,dist/(player.connectionRange*cam.zoom));
+  const tcx=(orbP.sx+actP.sx)/2,tcy=(orbP.sy+actP.sy)/2;
+  ctx.font='bold 9px -apple-system,sans-serif'; ctx.textAlign='center';
+  ctx.fillStyle=lineColor; ctx.globalAlpha=0.8;
+  const lbl=dragTarget?(dragTarget.canHardSmash?'⚡ HARD SMASH!':'◆ RELEASE TO SMASH'):`⟷ ${Math.round(tension*100)}%`;
+  ctx.fillText(lbl,tcx,tcy-10); ctx.globalAlpha=1;
+}
+
+function drawBody(body,sx,sy,sr,isPlayerPos=false){
+  const pulse=1+.04*Math.sin(Date.now()*.0015+(body.pos?body.pos.x*10:0));
+  const pr=sr*pulse;
+  if(body.glow&&body.glow!=='#000000'){
+    const gr=body.isStar?pr*3:(body.isBlackHole?pr*5:pr*2.2);
+    const g=ctx.createRadialGradient(sx,sy,pr*.1,sx,sy,gr);
+    const rgb=hexRgb(body.glow);
+    g.addColorStop(0,`rgba(${rgb},.4)`); g.addColorStop(1,`rgba(${rgb},0)`);
+    ctx.beginPath(); ctx.arc(sx,sy,gr,0,Math.PI*2); ctx.fillStyle=g; ctx.fill();
+  }
+  if(body.isBlackHole){
+    [3.5,2.5,1.8].forEach((m,i)=>{
+      ctx.beginPath(); ctx.arc(sx,sy,pr*m,0,Math.PI*2);
+      ctx.strokeStyle=`rgba(167,139,250,${.15/(i+1)})`; ctx.lineWidth=pr*.5; ctx.stroke();
+    });
+    ctx.beginPath(); ctx.arc(sx,sy,pr,0,Math.PI*2); ctx.fillStyle='#000'; ctx.fill();
+    ctx.strokeStyle='rgba(167,139,250,.5)'; ctx.lineWidth=1.5; ctx.stroke();
+  } else if(body.isStar){
+    const g=ctx.createRadialGradient(sx-pr*.2,sy-pr*.2,0,sx,sy,pr);
+    g.addColorStop(0,'#fffbeb'); g.addColorStop(.4,'#fef3c7'); g.addColorStop(.75,'#f59e0b'); g.addColorStop(1,'#b45309');
+    ctx.beginPath(); ctx.arc(sx,sy,pr,0,Math.PI*2); ctx.fillStyle=g; ctx.fill();
+    ctx.save();
+    for(let i=0;i<8;i++){const a=(i/8)*Math.PI*2+linePhase*.2;ctx.beginPath();ctx.moveTo(sx+Math.cos(a)*pr,sy+Math.sin(a)*pr);ctx.lineTo(sx+Math.cos(a)*pr*1.6,sy+Math.sin(a)*pr*1.6);ctx.strokeStyle='rgba(253,230,138,.25)';ctx.lineWidth=2;ctx.stroke();}
+    ctx.restore();
+  } else {
+    const g=ctx.createRadialGradient(sx-pr*.3,sy-pr*.3,0,sx,sy,pr);
+    g.addColorStop(0,lighten(body.color,60)); g.addColorStop(.5,body.color); g.addColorStop(1,darken(body.color,40));
+    ctx.beginPath(); ctx.arc(sx,sy,pr,0,Math.PI*2); ctx.fillStyle=g; ctx.fill();
+    const atm=ctx.createRadialGradient(sx,sy,pr*.7,sx,sy,pr*1.2);
+    const rgb=hexRgb(body.color);
+    atm.addColorStop(0,`rgba(${rgb},0)`); atm.addColorStop(1,`rgba(${rgb},.2)`);
+    ctx.beginPath(); ctx.arc(sx,sy,pr*1.2,0,Math.PI*2); ctx.fillStyle=atm; ctx.fill();
+    if(body.hasRing){
+      ctx.save(); ctx.translate(sx,sy); ctx.scale(1,.28);
+      [1.9,2.3,2.7].forEach((m,i)=>{
+        ctx.beginPath(); ctx.arc(0,0,pr*m,0,Math.PI*2);
+        ctx.strokeStyle=`rgba(${hexRgb('#fcd34d')},${.5-i*.12})`; ctx.lineWidth=pr*(.55-i*.1); ctx.stroke();
+      });
+      ctx.restore();
+    }
+    if(isPlayerPos){
+      ctx.save(); ctx.beginPath(); ctx.arc(sx,sy,pr,0,Math.PI*2); ctx.clip();
+      ctx.fillStyle='rgba(22,163,74,.5)';
+      ctx.fillRect(sx-pr*.15,sy-pr*.35,pr*.5,pr*.32); ctx.fillRect(sx-pr*.5,sy+pr*.08,pr*.32,pr*.22);
+      ctx.restore();
+      ctx.beginPath(); ctx.arc(sx,sy,pr+5,0,Math.PI*2);
+      ctx.strokeStyle='rgba(96,165,250,.5)'; ctx.lineWidth=1.5;
+      ctx.setLineDash([4,5]); ctx.lineDashOffset=-linePhase*2; ctx.stroke(); ctx.setLineDash([]);
+    }
+  }
+  if(sr>2){
+    const labelY=sy-pr-8;
+    ctx.font=`bold ${Math.max(7,Math.min(13,pr*.8))}px -apple-system,sans-serif`; ctx.textAlign='center';
+    const lc=isPlayerPos?'#93c5fd':(body.isDanger?'#fca5a5':(body.isStar?'#fde68a':'#e2e8f0'));
+    ctx.fillStyle='rgba(0,0,0,.5)'; ctx.fillText(body.name,sx+.5,labelY+.5);
+    ctx.fillStyle=lc; ctx.fillText(body.name,sx,labelY);
+    if(sr>10){ctx.font='8px -apple-system,sans-serif';ctx.fillStyle='rgba(160,200,255,.55)';ctx.fillText(body.type,sx,labelY-10);}
+  }
+  // Body level badge
+  if(body.bodyLevel!==undefined&&sr>8&&!body.isStar&&!body.isBlackHole){
+    const maxLvl=body.bodyMaxLevel||1;
+    const lx=sx+pr*0.72,ly=sy-pr*0.72;
+    const badgeR=Math.max(5,Math.min(9,pr*0.35));
+    const lvlFrac=body.bodyLevel/maxLvl;
+    const badgeColor=lvlFrac>0.6?'#10b981':(lvlFrac>0.3?'#f59e0b':'#ef4444');
+    ctx.beginPath(); ctx.arc(lx,ly,badgeR,0,Math.PI*2);
+    ctx.fillStyle='#0a0a1a'; ctx.fill();
+    ctx.strokeStyle=badgeColor; ctx.lineWidth=1.5; ctx.stroke();
+    ctx.font=`bold ${Math.max(5,badgeR-1)}px sans-serif`; ctx.textAlign='center';
+    ctx.fillStyle=badgeColor; ctx.fillText('L'+body.bodyLevel,lx,ly+badgeR*0.38);
+  }
+}
+
+function drawMoons(body,parentSx,parentSy){
+  if(!body.moons||!body.alive) return;
+  if(cam.zoom<(body.isDanger?15:30)) return;
+  body.moons.forEach(moon=>{
+    if(!moon.alive) return;
+    const msx=parentSx+Math.cos(moon.angle)*moon.orbitR_px;
+    const msy=parentSy-Math.sin(moon.angle)*moon.orbitR_px;
+    const mr=Math.max(2,moon.gameR*Math.sqrt(cam.zoom/100)*.6);
+    ctx.beginPath(); ctx.arc(parentSx,parentSy,moon.orbitR_px,0,Math.PI*2);
+    ctx.strokeStyle='rgba(80,160,255,.07)'; ctx.lineWidth=.6; ctx.setLineDash([3,6]); ctx.stroke(); ctx.setLineDash([]);
+    const mg=ctx.createRadialGradient(msx-mr*.25,msy-mr*.25,0,msx,msy,mr);
+    mg.addColorStop(0,lighten(moon.color,50)); mg.addColorStop(1,darken(moon.color,20));
+    ctx.beginPath(); ctx.arc(msx,msy,mr,0,Math.PI*2); ctx.fillStyle=mg; ctx.fill();
+    if(cam.zoom>40){ctx.font='7px -apple-system,sans-serif';ctx.fillStyle='rgba(160,200,255,.7)';ctx.textAlign='center';ctx.fillText(moon.name,msx,msy-mr-4);}
+  });
+}
+
+function drawStarSystems(){
+  STAR_SYSTEMS.forEach(s=>{
+    const{sx,sy}=w2s(s.pos.x,s.pos.y);
+    if(sx<-100||sx>canvas.width+100||sy<-100||sy>canvas.height+100) return;
+    const opacity=Math.min(1,(8-cam.zoom)/7);
+    const r=Math.max(3,s.gameR*Math.sqrt(cam.zoom/4)*0.5);
+    const gl=ctx.createRadialGradient(sx,sy,r*.1,sx,sy,r*4);
+    const rgb=hexRgb(s.glow);
+    gl.addColorStop(0,`rgba(${rgb},.5)`); gl.addColorStop(1,`rgba(${rgb},0)`);
+    ctx.globalAlpha=opacity; ctx.beginPath(); ctx.arc(sx,sy,r*4,0,Math.PI*2); ctx.fillStyle=gl; ctx.fill();
+    const cg=ctx.createRadialGradient(sx-r*.2,sy-r*.2,0,sx,sy,r);
+    cg.addColorStop(0,'#ffffff'); cg.addColorStop(.5,s.color); cg.addColorStop(1,darken(s.color,30));
+    ctx.beginPath(); ctx.arc(sx,sy,r,0,Math.PI*2); ctx.fillStyle=cg; ctx.fill();
+    if(r>4){
+      ctx.globalAlpha=opacity*.4;
+      for(let i=0;i<4;i++){const a=(i/4)*Math.PI*2+linePhase*.1;ctx.beginPath();ctx.moveTo(sx+Math.cos(a)*r,sy+Math.sin(a)*r);ctx.lineTo(sx+Math.cos(a)*r*3.5,sy+Math.sin(a)*r*3.5);ctx.strokeStyle=s.color;ctx.lineWidth=0.8;ctx.stroke();}
+    }
+    ctx.globalAlpha=opacity;
+    ctx.font=`bold ${Math.max(8,Math.min(11,r*.9))}px -apple-system,sans-serif`; ctx.textAlign='center';
+    ctx.fillStyle='rgba(0,0,0,.5)'; ctx.fillText(s.name,sx+.5,sy-r-9+.5);
+    ctx.fillStyle=s.glow; ctx.fillText(s.name,sx,sy-r-9);
+    ctx.font='7px -apple-system,sans-serif'; ctx.fillStyle='rgba(160,200,255,.5)';
+    ctx.fillText(`${s.starType} · ${s.ly} ly`,sx,sy-r-19);
+    if(s.planets>0){ctx.fillStyle='rgba(16,185,129,.7)';ctx.fillText(`${s.planets} KNOWN PLANETS`,sx,sy+r+14);}
+    ctx.globalAlpha=1;
+  });
+}
+
+function drawExoplanets(){
+  if(cam.zoom>12) return; // only show at galactic zoom
+  EXOPLANET_BODIES.forEach(ep=>{
+    if(!ep.alive) return;
+    const{sx,sy}=w2s(ep.pos.x,ep.pos.y);
+    if(sx<-60||sx>canvas.width+60||sy<-60||sy>canvas.height+60) return;
+    const sr=Math.max(2,ep.gameR*Math.sqrt(cam.zoom/100)*0.6);
+    drawBody(ep,sx,sy,sr);
+  });
+}
+
+function drawTravel(){
+  if(!player.traveling) return;
+  const t=player.travelProgress;
+  const from=player.travelFrom,to=player.travelTo;
+  if(!from||!to) return;
+  const fromP=w2s(from.x,from.y),toP=w2s(to.x,to.y);
+  for(let i=0;i<12;i++){
+    const ti=(t-i*.05+1)%1; if(ti<0) continue;
+    const tx=fromP.sx+(toP.sx-fromP.sx)*ti,ty=fromP.sy+(toP.sy-fromP.sy)*ti;
+    const tr=(3-i*.2)*Math.max(0,1-i*.08);
+    ctx.beginPath(); ctx.arc(tx,ty,Math.max(0,tr),0,Math.PI*2);
+    ctx.fillStyle=`rgba(96,165,250,${.7-i*.05})`; ctx.fill();
+  }
+  const cx=fromP.sx+(toP.sx-fromP.sx)*t,cy=fromP.sy+(toP.sy-fromP.sy)*t;
+  drawBody(player.body,cx,cy,13*Math.sqrt(cam.zoom/100),true);
+}
+
+let frameId=0;
+function draw(){
+  frameId++;
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  let shX=0,shY=0;
+  if(screenShake){
+    shX=(Math.random()-.5)*2*screenShake.intensity; shY=(Math.random()-.5)*2*screenShake.intensity;
+    screenShake.intensity*=screenShake.decay;
+    if(screenShake.intensity<0.25) screenShake=null;
+  }
+  ctx.save();
+  if(shX||shY) ctx.translate(shX,shY);
+  const bg=ctx.createRadialGradient(canvas.width/2,canvas.height/2,0,canvas.width/2,canvas.height/2,Math.max(canvas.width,canvas.height));
+  bg.addColorStop(0,'#0a0a22'); bg.addColorStop(.5,'#06060f'); bg.addColorStop(1,'#03030c');
+  ctx.fillStyle=bg; ctx.fillRect(-shX,-shY,canvas.width,canvas.height);
+  stars.forEach(s=>{
+    const alpha=.25+.45*s.bright*(.5+.5*Math.sin(Date.now()*.001*s.speed+s.twinkle));
+    const sp=w2s(s.x,s.y);
+    ctx.beginPath(); ctx.arc(sp.sx,sp.sy,s.r,0,Math.PI*2);
+    ctx.fillStyle=`rgba(200,220,255,${alpha})`; ctx.fill();
+  });
+  if(cam.zoom<8){drawStarSystems(); drawExoplanets();}
+  const galEl=document.getElementById('galacticLabel');
+  if(cam.zoom<5){galEl.style.display='block';galEl.style.opacity=Math.min(1,(5-cam.zoom)/4)+'';} else galEl.style.display='none';
+  drawOrbits();
+  const conns=getConnections();
+  if(!player.traveling) drawConnections(conns);
+  if(!player.traveling) drawGravityWell();
+  const sorted=[...BODIES].sort((a,b)=>{if(a.isStar)return -1;if(b.isStar)return 1;if(a.isPlayer)return 1;if(b.isPlayer)return -1;return 0;});
+  sorted.forEach(body=>{
+    if(!body.alive) return;
+    const{sx,sy}=w2s(body.pos.x,body.pos.y);
+    const sr=screenR(body);
+    if(sx<-sr-120||sx>canvas.width+sr+120||sy<-sr-120||sy>canvas.height+sr+120) return;
+    if(!body.isPlayer||player.traveling){drawMoons(body,sx,sy);if(!body.isPlayer)drawBody(body,sx,sy,sr);}
+  });
+  if(!player.traveling){const{sx,sy}=w2s(player.pos.x,player.pos.y);drawBody(player.body,sx,sy,screenR(player.body),true);}
+  else drawTravel();
+  drawDragGhost();
+  if(dragTarget){
+    const bpos=dragTarget.isMoon?{x:dragTarget.moonWx,y:dragTarget.moonWy}:dragTarget.body.pos;
+    const{sx,sy}=w2s(bpos.x,bpos.y);
+    const sr=screenR(dragTarget.body)+7;
+    ctx.beginPath(); ctx.arc(sx,sy,sr,0,Math.PI*2);
+    ctx.strokeStyle=dragTarget.canHardSmash?'#f59e0b':'#10b981'; ctx.lineWidth=2.5;
+    ctx.globalAlpha=0.8+0.2*Math.sin(linePhase*5); ctx.stroke(); ctx.globalAlpha=1;
+    ctx.font='bold 10px -apple-system,sans-serif'; ctx.textAlign='center';
+    ctx.fillStyle=dragTarget.canHardSmash?'#f59e0b':'#10b981'; ctx.globalAlpha=0.9;
+    ctx.fillText(dragTarget.canHardSmash?'⚡ HARD SMASH!':'⚡ SMASH!',sx,sy-sr-8); ctx.globalAlpha=1;
+  }
+  particles.forEach(p=>{
+    const{sx,sy}=w2s(p.wx,p.wy);
+    ctx.beginPath(); ctx.arc(sx,sy,Math.max(0,p.r*cam.zoom),0,Math.PI*2);
+    ctx.fillStyle=p.color+Math.floor(p.life*220).toString(16).padStart(2,'0'); ctx.fill();
+  });
+  ctx.restore();
+}
+
+// ── CONNECTIONS ──
+function getConnections(){
+  if(player.traveling) return [];
+  const px=player.pos.x,py=player.pos.y;
+  const range=player.connectionRange;
+  const smashKingOwned=UPGRADES.find(u=>u.id==='smash_king').owned>0;
+  const hardSmashMassLimit=smashKingOwned?4:3;
+  const conns=[];
+
+  const checkBody=(body,dist,isMoon=false,parentBody=null,moonWx=null,moonWy=null)=>{
+    const canSmash=!body.isDanger&&!body.isStar&&!body.isBlackHole&&body.mass<player.mass*1.05;
+    const canHardSmash=!body.isDanger&&!body.isStar&&!body.isBlackHole&&!canSmash&&body.mass<player.mass*hardSmashMassLimit;
+    const isDanger=(body.isDanger||body.isStar)&&!canSmash&&!canHardSmash;
+    conns.push({body,dist,canSmash,canHardSmash,isDanger,isMoon,parentBody,moonWx,moonWy});
+  };
+
+  BODIES.forEach(body=>{
+    if(!body.alive||body.isPlayer) return;
+    if(body.isBlackHole&&player.mass<5000) return;
+    const dx=body.pos.x-px,dy=body.pos.y-py;
+    const dist=Math.sqrt(dx*dx+dy*dy);
+    if(dist<=range) checkBody(body,dist);
+    if(body.moons&&body.alive){
+      const bd=Math.sqrt((body.pos.x-px)**2+(body.pos.y-py)**2);
+      if(bd<=range*2){
+        body.moons.forEach(moon=>{
+          if(!moon.alive) return;
+          const mwx=body.pos.x+Math.cos(moon.angle)*moon.orbitR_px/cam.zoom;
+          const mwy=body.pos.y+Math.sin(moon.angle)*moon.orbitR_px/cam.zoom;
+          const mdist=Math.sqrt((mwx-px)**2+(mwy-py)**2);
+          if(mdist<=range*.5) checkBody(moon,mdist,true,body,mwx,mwy);
+        });
+      }
+    }
+  });
+
+  // Exoplanets reachable at galactic zoom
+  if(cam.zoom<12){
+    EXOPLANET_BODIES.forEach(ep=>{
+      if(!ep.alive) return;
+      const dx=ep.pos.x-px,dy=ep.pos.y-py;
+      const dist=Math.sqrt(dx*dx+dy*dy);
+      if(dist<=range*2) checkBody(ep,dist);
+    });
+  }
+
+  if(player.mass>100&&cam.zoom<6){
+    STAR_SYSTEMS.forEach(s=>{
+      const dx=s.pos.x-px,dy=s.pos.y-py;
+      const dist=Math.sqrt(dx*dx+dy*dy);
+      if(dist<=range*3) conns.push({body:{...s,glow:s.glow,color:s.color,gameR:s.gameR},dist,canSmash:false,canHardSmash:false,isDanger:true,isStarSystem:true});
+    });
+  }
+  return conns.sort((a,b)=>a.dist-b.dist);
+}
+
+// ── UPDATE ──
+function update(dt){
+  advanceOrbits(dt);
+  updateExoplanets(dt);
+  physicsUpdate(dt);
+  if(player.traveling){
+    player.travelProgress+=dt*0.7;
+    if(player.travelProgress>=1){player.travelProgress=1;finishTravel();}
+    if(player.travelTo){cam.x+=(player.travelTo.x-cam.x)*.05;cam.y+=(player.travelTo.y-cam.y)*.05;}
+  } else if(!cam.free&&!dragState.active){
+    cam.x+=(player.pos.x-cam.x)*.06; cam.y+=(player.pos.y-cam.y)*.06;
+  }
+  if(dragState.active){
+    const conns=getConnections(); dragTarget=null;
+    const{sx:psx,sy:psy}=w2s(player.pos.x,player.pos.y);
+    const psr=screenR(player.body);
+    conns.forEach(conn=>{
+      if(!conn.canSmash&&!conn.canHardSmash) return;
+      const bpos=conn.isMoon?{x:conn.moonWx,y:conn.moonWy}:conn.body.pos;
+      const{sx:bsx,sy:bsy}=w2s(bpos.x,bpos.y);
+      if(Math.hypot(psx-bsx,psy-bsy)<psr+screenR(conn.body)+6) dragTarget=conn;
+    });
+  }
+  particles=particles.filter(p=>p.life>0);
+  particles.forEach(p=>{p.wx+=p.vx;p.wy+=p.vy;p.vx*=.93;p.vy*=.93;p.life-=p.decay;p.r*=.97;});
+  const homeBtnEl=document.getElementById('homeBtn');
+  if(cam.free) homeBtnEl.classList.add('visible'); else homeBtnEl.classList.remove('visible');
+}
+
+// ── TRAVEL ──
+function travelTo(conn){
+  if(player.traveling) return;
+  const targetPos=conn.isMoon?{x:conn.moonWx,y:conn.moonWy}:conn.body.pos;
+  player.traveling=true; player.travelProgress=0;
+  player.travelFrom={...player.pos}; player.travelTo={...targetPos};
+  player.travelTarget=conn; closeInfo();
+}
+
+function finishTravel(){
+  player.traveling=false;
+  const conn=player.travelTarget; if(!conn) return;
+  const body=conn.body;
+  const targetPos=conn.isMoon?{x:conn.moonWx,y:conn.moonWy}:body.pos;
+  player.pos={...targetPos}; player.orbX=player.pos.x; player.orbY=player.pos.y;
+  if(conn.canSmash){
+    smashBody(body,conn.isMoon,conn.parentBody,false);
+  } else if(conn.canHardSmash){
+    smashBody(body,conn.isMoon,conn.parentBody,true);
+  } else if(conn.isDanger){
+    const dmg=Math.min(35,body.mass>100?40:20);
+    player.hp=Math.max(0,player.hp-dmg);
+    showToast(`💥 Bounced off ${body.name}! −${dmg} HP`,'#ef4444');
+    player.pos={...player.travelFrom}; player.orbX=player.pos.x; player.orbY=player.pos.y;
+    updateHUD();
+  } else {
+    showToast(`🔭 ${body.name} — too similar in mass`,'#8b5cf6');
+    player.pos={...player.travelFrom}; player.orbX=player.pos.x; player.orbY=player.pos.y;
+  }
+  player.travelFrom=null; player.travelTo=null; player.travelTarget=null;
+}
+
+// ── HUD ──
+function updateHUD(){
+  const xpPct=Math.min(100,(player.xp/player.xpNext)*100);
+  const hpPct=(player.hp/player.hpMax)*100;
+  const massPct=Math.min(100,(player.mass/350)*100);
+  document.getElementById('hpBar').style.width=hpPct+'%';
+  document.getElementById('xpBar').style.width=xpPct+'%';
+  document.getElementById('msBar').style.width=massPct+'%';
+  document.getElementById('hpVal').textContent=Math.round(hpPct)+'%';
+  document.getElementById('xpPct').textContent=Math.round(xpPct)+'%';
+  document.getElementById('xpVal').textContent=player.xp;
+  document.getElementById('smashVal').textContent=player.smashed;
+  document.getElementById('msVal').textContent=player.mass<10?player.mass.toFixed(3)+' EM':Math.round(player.mass)+' EM';
+  document.getElementById('coinVal').textContent=player.coins;
+}
+
+function updateSidePanel(conns){
+  const el=document.getElementById('sideList');
+  if(!conns.length){el.innerHTML='<div style="font-size:9px;color:var(--dim);text-align:center;padding:8px 0">No worlds in range<br>Explore or zoom in</div>';return;}
+  el.innerHTML=conns.slice(0,6).map(c=>{
+    const b=c.body;
+    const badge=c.canSmash?'badge-smash':(c.canHardSmash?'badge-hard':(c.isDanger?'badge-danger':'badge-far'));
+    const label=c.canSmash?'SMASH':(c.canHardSmash?'HARD':(c.isDanger?'AVOID':'EQUAL'));
+    const lvlStr=b.bodyLevel!==undefined?` · L${b.bodyLevel}`:'';
+    const bcolor=b.glow||b.color;
+    const distStr=c.dist<1?c.dist.toFixed(2)+' AU':c.dist.toFixed(1)+' AU';
+    return `<div class="obj-row"><div class="obj-dot" style="background:${b.color};color:${bcolor}"></div><div class="obj-info"><div class="obj-name" style="color:${bcolor}">${b.name}${lvlStr}</div><div class="obj-det">${b.type||'BODY'} · ${distStr}</div></div><div class="obj-badge ${badge}">${label}</div></div>`;
+  }).join('');
+}
+
+function showToast(msg,color='#e2e8f0'){
+  const t=document.createElement('div'); t.className='toast'; t.textContent=msg;
+  t.style.color=color; t.style.borderColor=color+'44';
+  document.getElementById('toasts').appendChild(t);
+  setTimeout(()=>t.remove(),2900);
+}
+
+let selectedConn=null;
+function showInfo(conn){
+  selectedConn=conn;
+  const body=conn.body;
+  document.getElementById('infoName').textContent=body.name;
+  document.getElementById('infoName').style.color=body.glow||body.color;
+  document.getElementById('infoType').textContent=body.type||body.starType||'BODY';
+  document.getElementById('infoMass').textContent=body.mass<0.01?body.mass.toExponential(2)+' EM':body.mass.toFixed(4)+' EM';
+  document.getElementById('infoDist').textContent=conn.dist.toFixed(2)+' AU';
+  document.getElementById('infoBodyLvl').textContent=body.bodyLevel!==undefined?`L${body.bodyLevel} / L${body.bodyMaxLevel}`:'—';
+  document.getElementById('infoXP').textContent=(body.xp||'—')+(body.xp?' XP':'');
+  const btn=document.getElementById('actionBtn');
+  if(conn.canSmash){btn.className='action-btn btn-smash';btn.textContent=`▶ TRAVEL & SMASH ${body.name.toUpperCase()}`;}
+  else if(conn.canHardSmash){btn.className='action-btn btn-hard';btn.textContent=`⚡ HARD SMASH ${body.name.toUpperCase()}`;}
+  else if(conn.isStarSystem){btn.className='action-btn btn-star';btn.textContent=`✦ TRAVEL TO ${body.name.toUpperCase()}`;}
+  else if(conn.isDanger){btn.className='action-btn btn-danger';btn.textContent='⚠ DANGEROUS — Travel Anyway';}
+  else{btn.className='action-btn';btn.textContent=`▶ TRAVEL TO ${body.name.toUpperCase()}`;}
+  document.getElementById('infoBox').style.display='block';
+}
+function closeInfo(){document.getElementById('infoBox').style.display='none';selectedConn=null;}
+document.getElementById('actionBtn').addEventListener('click',()=>{if(selectedConn)travelTo(selectedConn);});
+document.getElementById('closeBtn').addEventListener('click',closeInfo);
+
+// ── UPGRADE SHOP ──
+function openShop(){
+  renderShop();
+  document.getElementById('shopModal').classList.add('open');
+}
+function closeShop(){document.getElementById('shopModal').classList.remove('open');}
+function renderShop(){
+  document.getElementById('shopCoinsDisplay').textContent=`${player.coins} ⚡ coins available`;
+  const container=document.getElementById('shopItems');
+  container.innerHTML=UPGRADES.map(u=>{
+    const maxed=u.owned>=u.max;
+    const canAfford=player.coins>=u.cost;
+    const btnLabel=maxed?`✓ MAXED`:`${u.cost} ⚡`;
+    const btnClass=maxed?'upg-btn maxed':(canAfford?'upg-btn':'upg-btn');
+    return `<div class="upg-item">
+      <div class="upg-icon">${u.icon}</div>
+      <div class="upg-info">
+        <div class="upg-name">${u.name}</div>
+        <div class="upg-desc">${u.desc}</div>
+        ${u.owned>0?`<div class="upg-owned">✓ Owned: ${u.owned}/${u.max}</div>`:''}
+      </div>
+      <button class="${btnClass}" ${maxed||!canAfford?'disabled':''} onclick="buyUpgrade('${u.id}')">${btnLabel}</button>
+    </div>`;
+  }).join('');
+}
+function buyUpgrade(id){
+  const u=UPGRADES.find(x=>x.id===id);
+  if(!u||u.owned>=u.max||player.coins<u.cost) return;
+  player.coins-=u.cost;
+  u.owned++;
+  // Apply immediate effects
+  if(id==='gravity') player.connectionRange=1.8*Math.pow(player.mass,.3)*(1+u.owned*0.3);
+  if(id==='shield'){player.hpMax+=50;player.hp=Math.min(player.hpMax,player.hp+50);}
+  if(id==='moon'){
+    // Add moon to Earth
+    const moonNames=['Selene','Artemis','Theia'];
+    const mIdx=u.owned-1;
+    player.body.moons.push({id:'bonus_moon_'+mIdx,name:moonNames[mIdx]||'Moon '+u.owned,type:'MOON',mass:0.005,gameR:4,orbitR_px:50+mIdx*15,color:'#a78bfa',glow:'#c4b5fd',xp:0,speed:0.02+mIdx*0.005,angle:Math.random()*Math.PI*2,alive:true});
+  }
+  showToast(`✓ ${u.name} purchased!`,'#f59e0b');
+  renderShop();
+  updateHUD();
+}
+document.getElementById('shopBtn').addEventListener('click',openShop);
+document.getElementById('shopClose').addEventListener('click',closeShop);
+
+// ── HOME BUTTON ──
+document.getElementById('homeBtn').addEventListener('click',()=>{cam.free=false;showToast('🌍 Returning to Earth','#60a5fa');});
+
+// ── INPUT ──
+canvas.addEventListener('mousedown',e=>{
+  if(player.traveling){cam.dragging=true;cam.moved=false;cam.dragStart={x:e.clientX,y:e.clientY};cam.camAtDrag={x:cam.x,y:cam.y};return;}
+  const{sx,sy}=w2s(player.pos.x,player.pos.y);
+  if(Math.hypot(e.clientX-sx,e.clientY-sy)<screenR(player.body)+24){
+    dragState.started=true;dragState.downX=e.clientX;dragState.downY=e.clientY;
+  } else {cam.dragging=true;cam.moved=false;cam.dragStart={x:e.clientX,y:e.clientY};cam.camAtDrag={x:cam.x,y:cam.y};}
+});
+
+canvas.addEventListener('mousemove',e=>{
+  if(dragState.started&&Math.hypot(e.clientX-dragState.downX,e.clientY-dragState.downY)>7){dragState.active=true;canvas.style.cursor='grabbing';}
+  if(dragState.active){
+    const wpos=s2w(e.clientX,e.clientY);
+    const maxR=player.connectionRange*1.6;
+    const ddx=wpos.wx-player.orbX,ddy=wpos.wy-player.orbY;
+    const dd=Math.sqrt(ddx*ddx+ddy*ddy);
+    if(dd<=maxR){player.pos.x=wpos.wx;player.pos.y=wpos.wy;}
+    else{player.pos.x=player.orbX+(ddx/dd)*maxR;player.pos.y=player.orbY+(ddy/dd)*maxR;}
+  } else if(cam.dragging){
+    const dx=(e.clientX-cam.dragStart.x)/cam.zoom,dy=-(e.clientY-cam.dragStart.y)/cam.zoom;
+    cam.x=cam.camAtDrag.x-dx;cam.y=cam.camAtDrag.y-dy;
+    if(Math.abs(e.clientX-cam.dragStart.x)>5||Math.abs(e.clientY-cam.dragStart.y)>5){cam.moved=true;cam.free=true;}
+  } else {
+    const{sx,sy}=w2s(player.pos.x,player.pos.y);
+    canvas.style.cursor=Math.hypot(e.clientX-sx,e.clientY-sy)<screenR(player.body)+24?'grab':'default';
+  }
+});
+
+canvas.addEventListener('mouseup',e=>{
+  if(dragState.active){
+    if(dragTarget){
+      const conn=dragTarget;
+      const targetPos=conn.isMoon?{x:conn.moonWx,y:conn.moonWy}:conn.body.pos;
+      player.pos={...targetPos};player.orbX=targetPos.x;player.orbY=targetPos.y;
+      smashBody(conn.body,conn.isMoon,conn.parentBody,conn.canHardSmash);
+      dragTarget=null;
+    }
+    dragState.active=false;dragState.started=false;canvas.style.cursor='default';
+  } else if(!cam.moved&&!dragState.started){handleClick(e.clientX,e.clientY);}
+  dragState.started=false;cam.dragging=false;cam.moved=false;
+});
+
+canvas.addEventListener('wheel',e=>{
+  const f=e.deltaY<0?1.12:1/1.12;
+  cam.zoom=Math.max(cam.minZoom,Math.min(cam.maxZoom,cam.zoom*f));cam.free=true;
+},{passive:true});
+
+let touchStart=null,touchZoomDist=null;
+canvas.addEventListener('touchstart',e=>{
+  e.preventDefault();
+  if(e.touches.length===2){const t1=e.touches[0],t2=e.touches[1];touchZoomDist=Math.hypot(t2.clientX-t1.clientX,t2.clientY-t1.clientY);}
+  else{const t=e.touches[0];
+    if(!player.traveling){const{sx,sy}=w2s(player.pos.x,player.pos.y);if(Math.hypot(t.clientX-sx,t.clientY-sy)<screenR(player.body)+30){dragState.started=true;dragState.downX=t.clientX;dragState.downY=t.clientY;return;}}
+    touchStart={x:t.clientX,y:t.clientY,camX:cam.x,camY:cam.y,moved:false};}
+},{passive:false});
+
+canvas.addEventListener('touchmove',e=>{
+  e.preventDefault();
+  if(e.touches.length===2&&touchZoomDist){const t1=e.touches[0],t2=e.touches[1];const d=Math.hypot(t2.clientX-t1.clientX,t2.clientY-t1.clientY);cam.zoom=Math.max(cam.minZoom,Math.min(cam.maxZoom,cam.zoom*(d/touchZoomDist)));touchZoomDist=d;cam.free=true;}
+  else if(e.touches.length===1){const t=e.touches[0];
+    if(dragState.started&&Math.hypot(t.clientX-dragState.downX,t.clientY-dragState.downY)>10)dragState.active=true;
+    if(dragState.active){const wpos=s2w(t.clientX,t.clientY);const maxR=player.connectionRange*1.6;const ddx=wpos.wx-player.orbX,ddy=wpos.wy-player.orbY;const dd=Math.sqrt(ddx*ddx+ddy*ddy);if(dd<=maxR){player.pos.x=wpos.wx;player.pos.y=wpos.wy;}else{player.pos.x=player.orbX+(ddx/dd)*maxR;player.pos.y=player.orbY+(ddy/dd)*maxR;}}
+    else if(touchStart){const dx=(t.clientX-touchStart.x)/cam.zoom,dy=-(t.clientY-touchStart.y)/cam.zoom;if(Math.abs(t.clientX-touchStart.x)>5||Math.abs(t.clientY-touchStart.y)>5){touchStart.moved=true;cam.free=true;}cam.x=touchStart.camX-dx;cam.y=touchStart.camY-dy;}}
+},{passive:false});
+
+canvas.addEventListener('touchend',e=>{
+  if(dragState.active){
+    if(dragTarget){const conn=dragTarget;const targetPos=conn.isMoon?{x:conn.moonWx,y:conn.moonWy}:conn.body.pos;player.pos={...targetPos};player.orbX=targetPos.x;player.orbY=targetPos.y;smashBody(conn.body,conn.isMoon,conn.parentBody,conn.canHardSmash);dragTarget=null;}
+    dragState.active=false;dragState.started=false;
+  } else if(e.changedTouches.length===1&&touchStart&&!touchStart.moved&&!dragState.started){handleClick(e.changedTouches[0].clientX,e.changedTouches[0].clientY);}
+  dragState.started=false;touchStart=null;touchZoomDist=null;
+});
+
+function handleClick(sx,sy){
+  if(!running||player.traveling) return;
+  const conns=getConnections(); let clicked=false;
+  conns.forEach(conn=>{
+    if(clicked) return;
+    const bpos=conn.isMoon?{x:conn.moonWx,y:conn.moonWy}:conn.body.pos;
+    const{sx:bsx,sy:bsy}=w2s(bpos.x,bpos.y);
+    const{sx:psx,sy:psy}=w2s(player.pos.x,player.pos.y);
+    if(Math.hypot(sx-bsx,sy-bsy)<screenR(conn.body)+22){showInfo(conn);clicked=true;return;}
+    const lineLen=Math.hypot(bsx-psx,bsy-psy); if(lineLen<1) return;
+    const t=Math.max(0,Math.min(1,((sx-psx)*(bsx-psx)+(sy-psy)*(bsy-psy))/(lineLen*lineLen)));
+    const clx=psx+t*(bsx-psx),cly=psy+t*(bsy-psy);
+    if(Math.hypot(sx-clx,sy-cly)<16){showInfo(conn);clicked=true;}
+  });
+  if(!clicked)closeInfo();
+}
+
+// ── HELPERS ──
+function hexRgb(hex){if(!hex||hex==='#000000')return '167,139,250';try{return `${parseInt(hex.slice(1,3),16)},${parseInt(hex.slice(3,5),16)},${parseInt(hex.slice(5,7),16)}`;}catch(e){return '200,200,200';}}
+function lighten(hex,a){try{return `rgb(${Math.min(255,parseInt(hex.slice(1,3),16)+a)},${Math.min(255,parseInt(hex.slice(3,5),16)+a)},${Math.min(255,parseInt(hex.slice(5,7),16)+a)})`;}catch(e){return '#fff';}}
+function darken(hex,a){try{return `rgb(${Math.max(0,parseInt(hex.slice(1,3),16)-a)},${Math.max(0,parseInt(hex.slice(3,5),16)-a)},${Math.max(0,parseInt(hex.slice(5,7),16)-a)})`;}catch(e){return '#000';}}
+
+document.querySelectorAll('.spd-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{speedMult=parseFloat(btn.dataset.spd);document.querySelectorAll('.spd-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');});
+});
+
+function animSplash(){
+  const el=document.getElementById('splashOrbit'); el.innerHTML='<div class="s-sun"></div>';
+  [[55,4,'#94a3b8',1.8],[82,9,'#fbbf24',1.4],[103,10,'#2563eb',1.0]].forEach(([r,s,c,sp])=>{
+    const ring=document.createElement('div');ring.className='s-ring';ring.style.cssText=`width:${r*2}px;height:${r*2}px;margin-left:${-r}px;margin-top:${-r}px`;el.appendChild(ring);
+    const pl=document.createElement('div');pl.className='s-planet';pl.style.cssText=`width:${s}px;height:${s}px;margin-left:${-s/2}px;margin-top:${-s/2}px;background:radial-gradient(circle at 35% 35%,white,${c});box-shadow:0 0 8px ${c}`;el.appendChild(pl);
+    let angle=Math.random()*Math.PI*2;const step=sp*.008;
+    (function tick(){angle+=step;pl.style.transform=`translate(${Math.cos(angle)*r}px,${Math.sin(angle)*r}px)`;if(!document.getElementById('splash').classList.contains('fade'))requestAnimationFrame(tick);})();
+  });
+}
+
+function getSimDate(){
+  const base=Date.UTC(2026,6,16);const d=new Date(base+simDayOffset*86400000);
+  const mo=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+  return `⊙ ${d.getUTCDate()} ${mo[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
+}
+
+let running=false,lastTime=null;
+function gameLoop(ts){
+  if(!running) return;
+  const dt=lastTime?Math.min((ts-lastTime)/1000,.1):.016; lastTime=ts;
+  update(dt); draw();
+  if(frameId%20===0){document.getElementById('simDate').textContent=getSimDate();updateSidePanel(getConnections());}
+  requestAnimationFrame(gameLoop);
+}
+
+function startGame(){
+  document.getElementById('splash').classList.add('fade');
+  setTimeout(()=>{
+    document.getElementById('splash').style.display='none';
+    running=true; updateHUD();
+    showToast('🌍 You are Earth. Drag to smash worlds!','#60a5fa');
+    setTimeout(()=>showToast('⚡ Orange lines = HARD SMASH bigger planets','#f59e0b'),1800);
+    setTimeout(()=>showToast('🪙 Earn coins → ⚡ SHOP for upgrades','#f59e0b'),3500);
+    setTimeout(()=>showToast('🌌 Zoom out to explore exoplanet systems','#8b5cf6'),5200);
+    requestAnimationFrame(gameLoop);
+  },800);
+}
+
+function resize(){canvas.width=window.innerWidth;canvas.height=window.innerHeight;}
+window.addEventListener('resize',resize); resize();
+
+BODIES.find(b=>b.isBlackHole).pos={x:800,y:0};
+initStars(); initPhysics(); updateHUD(); animSplash();
+document.getElementById('startBtn').addEventListener('click',startGame);
+
+(function bgLoop(){
+  if(running) return;
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  const bg=ctx.createRadialGradient(canvas.width/2,canvas.height/2,0,canvas.width/2,canvas.height/2,Math.max(canvas.width,canvas.height));
+  bg.addColorStop(0,'#0a0a22'); bg.addColorStop(1,'#03030c');
+  ctx.fillStyle=bg; ctx.fillRect(0,0,canvas.width,canvas.height);
+  stars.forEach(s=>{const alpha=.2+.4*s.bright*(.5+.5*Math.sin(Date.now()*.001*s.speed+s.twinkle));const sp=w2s(s.x,s.y);ctx.beginPath();ctx.arc(sp.sx,sp.sy,s.r,0,Math.PI*2);ctx.fillStyle=`rgba(200,220,255,${alpha})`;ctx.fill();});
+  requestAnimationFrame(bgLoop);
+})();
+</script>
+</body>
+</html>
